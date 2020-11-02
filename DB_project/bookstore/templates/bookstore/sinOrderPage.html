@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>sinOrderPage</title>
+</head>
+<body>
+    <h3 style="display:inline">{{User_list.User_name}}님 구매페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' User_list.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a></br></br></br></br></br>
+    <p><b>주문내역</b></p>
+    <p>책 이름 : {{Book_list.Book_name}}</p></br>
+    <p>주문수량 : {{Order_list.Order_count}}</p>
+    <p>주문일자 : {{Order_list.Order_date}}</p>
+    <p>주문총액 : {{Order_list.Order_price}}원</p>
+    <p>신용카드 종류 : {{Order_list.Card_name}}</p>
+    <p>신용카드 번호 : {{Order_list.Card_num}}</p>
+    <p>신용카드 유효기간 : {{Order_list.Card_date}}</p>
+    <p>배송지 우편번호 : {{SD_list.SD_num}}</p>
+    <p>배송지 기본주소 : {{SD_list.SD_ba}}</p>
+    <p>배송지 상세주소 : {{SD_list.SD_da}}</p>
+</body>
+</html>

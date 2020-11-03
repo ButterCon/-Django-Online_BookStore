@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset=UTF-8>
+    <title>userinfoPage</title>
+</head>
+<body>
+    <h3 style="display:inline">회원수정</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">이전페이지</a></br></br>
+    <form action="{% url 'bookstore:userinfo' User_list.User_name %}" method="post">
+    {% csrf_token %}
+        이름 : <input type="text" value="{{User_list.User_name}}" name="name"></br>
+        아이디 : <input type="text" value="{{User_list.User_id}}" name="id"></br>
+        패스워드 : <input type="password" value="{{User_list.User_pw}}" name="pw"></br>
+        <a href="{%url 'bookstore:sdadd' User_list.User_name %}">주소 추가/수정</a></br>
+        <a href="{%url 'bookstore:cardadd' User_list.User_name %}">카드 추가/수정</a></br>
+        <input type="submit" name="Register"></br>
+    </form>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset="UTF-8">
+    <title>주문완료페이지</title>
+</head>
+<body>
+    <h3 style="display:inline">{{User_list.User_name}}님 구매페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' User_list.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a>
+    <a href="{% url 'bookstore:cart' User_list.User_name %}">장바구니</a></br></br></br>
+    <p>주문이 완료되었습니다.</p>
+</body>
+</html>

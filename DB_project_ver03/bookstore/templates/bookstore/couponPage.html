@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CouponPage</title>
+</head>
+<body>
+    <h3 style="display:inline">{{User_list.User_name}}님 쿠폰페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' User_list.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a>
+    <a href="{% url 'bookstore:cart' User_list.User_name %}">장바구니</a></br></br></br>
+    {% for i in CP_list %}
+        <p>{{i.CP_kind}}</p>
+    {% endfor%}
+</body>
+</html>

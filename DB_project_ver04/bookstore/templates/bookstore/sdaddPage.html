@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset="UTF-8">
+    <title>SDaddPage</title>
+</head>
+<body>
+    <h3 style="display:inline">{{User_list.User_name}}님 주소수정 페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' User_list.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a></br></br>
+    <p>주소 추가</p>
+    <form action="{% url 'bookstore:sdadd' User_list.User_name %}" method="post">
+    {% csrf_token %}
+        우편번호 : <input type="text" value="{{SD_list.SD_num}}" name="sd_num"></br>
+        기본주소 : <input type="text" value="{{SD_list.SD_ba}}" name="sd_ba"></br>
+        상세주소 : <input type="text" value="{{SD_list.SD_da}}" name="sd_da"></br>
+        <input type="submit" name="Register"></br>
+    </form>
+    <p>주소 보기</p>
+    {% for i in SD_list %}
+        우편번호 : {{i.SD_num}}</br>
+        기본주소 : {{i.SD_ba}}</br>
+        상세주소 : {{i.SD_da}}</br></br>
+    {% endfor %}
+</body>
+</html>

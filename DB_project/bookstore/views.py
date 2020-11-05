@@ -54,19 +54,18 @@ def cartaddPage(request, name, book_id):
     # 홈에서 장바구니 클릭시 이벤트
     # 책 재고량 -1
     # User 장바구니에 Book 추가됨
-    print("GET받음")
-    #책 stock -1 해주기
-    book_stock = Book.objects.get(id=book_id)
-    book_stock.Book_stock += -1
-    book_stock.save()
-    #유저장바구니리스트에 책,장바구니 추가
-    BookSB_qs = BookSB(ShoppingBasket=ShoppingBasket.objects.get(User=User.objects.get(User_name=name)), Book=Book.objects.get(id=book_id))
-    BookSB_qs.save()
-    #name에 해당하는 유저 장바구니 리스트 가져오기
     User_qs = User.objects.get(User_name=name)
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
+    Book_qs = Book.objects.get(id=book_id)
+    #책 stock -1 해주기
+    Book_qs.Book_stock += -1
+    Book_qs.save()
+    #유저장바구니리스트에 책,장바구니 추가
+    BookSB_qs = BookSB(ShoppingBasket=SB_qs, Book=Book_qs)
+    BookSB_qs.save()
+    #name에 해당하는 유저 장바구니 리스트 가져오기
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    context = {'User_list': User.objects.get(User_name=name), 'Book_list': Book.objects.all(), 'BookSB_list': BookSB_qs}
+    context = {'User_list': User_qs, 'BookSB_list': BookSB_qs}
     return render(request, 'bookstore/cartPage.html', context)
 
 
@@ -74,12 +73,13 @@ def cartdelPage(request, name, book_id):
     #장바구니 페이지에서 장바구니 지우기 클릭시 이벤트
     #책 재고량 +1
     #User 장바구니에 Book 제거
-    # 책 stock +1 해주기
-    book_stock = Book.objects.get(id=book_id)
-    book_stock.Book_stock += 1
-    book_stock.save()
-    #유저장바구니리스트에 책,장바구니 지우기
+    User_qs = User.objects.get(User_name=name)
+    SB_qs = ShoppingBasket.objects.get(User=User_qs)
     Book_qs = Book.objects.get(id=book_id)
+    # 책 stock +1 해주기
+    Book_qs.Book_stock += 1
+    Book_qs.save()
+    #유저장바구니리스트에 책,장바구니 지우기
     BookSB_qs = BookSB.objects.filter(Book=Book_qs)
     BookSB_qs.last().delete()  #지워주기
     #
@@ -91,6 +91,7 @@ def cartdelPage(request, name, book_id):
 
 def orderConPage(request, name, book_id):   #주문 페이지 들어가기전에 쿼리 생성 및 저장
     try:
+
         #개인장바구니에 넣어서 구매하도록하자
         User_qs = User.objects.get(User_name=name)
         Card_qs = Card.objects.filter(User=User_qs).first() #카드 첫번째
@@ -148,7 +149,9 @@ def couponPage(request, name):
     return render(request, 'bookstore/couponPage.html', context)
 
 
+#수정해야됨
 def orderdonePage(request, name):
+    #책 -1해줘야됨
     print("주문완료 페이지")
     User_qs = User.objects.get(User_name=name)
     context = {'User_list': User_qs}

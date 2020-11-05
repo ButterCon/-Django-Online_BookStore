@@ -16,7 +16,7 @@
         {% for i in Book_list %}
             <p style="display:inline"><b>{{i.Book_name}}</b></p>
             <p style="display:inline">(재고량 : {{i.Book_stock}})</p>
-            <a href="{% url 'bookstore:cartadd' User_list.User_name i.id %}">장바구니</a>
+            <a href="{% url 'bookstore:cartadd' User_list.User_name i.id %}">장바구니추가</a>
             <a href="{% url 'bookstore:ordercon' User_list.User_name i.id %}">바로구매</a></br>
         {% endfor %}
     {% endif %}

@@ -32,12 +32,8 @@ class Card(models.Model):
 
 class Order(models.Model):
     User = models.ForeignKey(User, on_delete=models.PROTECT)
-    Order_date = models.DateTimeField(auto_now_add=True)
-    Order_count = models.IntegerField(default=0)
-    Order_price = models.IntegerField(default=0)
-    Card_name = models.CharField(max_length=100)
-    Card_num = models.IntegerField(default=0)
-    Card_date = models.CharField(max_length=100)
+    Order_date = models.DateTimeField()
+    Order_totalprice = models.IntegerField(default=0)
 
     def __id__(self):
         return self.id
@@ -70,6 +66,8 @@ class BookSB(models.Model):         #책 장바구니 리스트
 class BookOrder(models.Model):      #책 주문내역리스트
     Book = models.ForeignKey(Book, on_delete=models.PROTECT)
     Order = models.ForeignKey(Order, on_delete=models.PROTECT)
+    BO_count = models.IntegerField(default=0)
+    BO_price = models.IntegerField(default=0)
     CP_kind = models.CharField(default='', max_length=100)
     BO_DC_price = models.IntegerField(default=0)
     def __id__(self):

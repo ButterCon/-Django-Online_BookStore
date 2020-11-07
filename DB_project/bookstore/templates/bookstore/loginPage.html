@@ -7,8 +7,8 @@
 <body>
     <h3>도서구매사이트</h3>
     {% if User_list %}
-        <p> {{User_list.User_name}}님 환영합니다.</p>
-        <a href="{% url 'bookstore:home' User_list.User_name %}">홈페이지</a>
+        <p> {{User.User_name}}님 환영합니다.</p>
+        <a href="{% url 'bookstore:home' User.User_name %}">홈페이지</a>
     {% else %}
         <form action="{% url 'bookstore:login' %}" method="post">
         {% csrf_token %}

@@ -66,8 +66,8 @@ class BookSB(models.Model):         #책 장바구니 리스트
 class BookOrder(models.Model):      #책 주문내역리스트
     Book = models.ForeignKey(Book, on_delete=models.PROTECT)
     Order = models.ForeignKey(Order, on_delete=models.PROTECT)
-    BO_count = models.IntegerField(default=0)
-    BO_price = models.IntegerField(default=0)
+    BO_count = models.IntegerField(default=0)   #책 수량
+    BO_price = models.IntegerField(default=0)   #책 더한 가격
     CP_kind = models.CharField(default='', max_length=100)
     BO_DC_price = models.IntegerField(default=0)
     def __id__(self):

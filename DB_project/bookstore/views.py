@@ -51,19 +51,51 @@ def cartPage(request, name):
 def cartaddPage(request, name, book_id):
     # 홈에서 장바구니 클릭시 이벤트
     # 책 재고량 -1
+    # 책 재고량 수정하고 나머지는 orderCon이라 같음
     # User 장바구니에 Book 추가됨
     User_qs = User.objects.get(User_name=name)
-    SB_qs = ShoppingBasket.objects.get(User=User_qs)
     Book_qs = Book.objects.get(id=book_id)
+    SB_qs = ShoppingBasket.objects.get(User=User_qs)
     #책 stock -1 해주기
     Book_qs.Book_stock += -1
     Book_qs.save()
-    #유저장바구니리스트에 책,장바구니 추가
-    BookSB_qs = BookSB(ShoppingBasket=SB_qs, Book=Book_qs)  #장바구니에 책 추가됨
-    BookSB_qs.save()
-    #name에 해당하는 유저 장바구니 리스트 가져오기
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs}
+    #장바구니에 책 넣기
+    BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #장바구니 가져오기
+    #BookOrder 책 개수 저장하기
+    Book_stock = len(BookSB.objects.filter(Book=Book_qs))   #넘어온 책이 저장된 개수를 저장
+    #BookOrder 책 가격 넣기
+    Book_price_add = 0
+    for i in BookSB.objects.filter(Book=Book_qs):   #넘어온 책이 저장된 가격를 저장
+        Book_price_add += i.Book.Book_price
+    #Order -> 주문 총액 저장
+    order_totalAmount = 0
+    for i in BookSB_qs:
+        order_totalAmount += i.Book.Book_price
+    #Order 쿼리 저장
+    if len(BookSB.objects.filter(ShoppingBasket=SB_qs))==1:   #처음 저장할 때, 주문을 만들어준다, 주문 진행 할 때는 이걸로 계속 진행함
+        Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=order_totalAmount)
+        Order_qs.save()
+    else:   #주문리스트에 저장돼 있을경우 데이터 업데이트해준다.
+        Order_qs = Order.objects.filter(User=User_qs).last()    #최신 주문가져오기
+        Order_qs.Order_totalprice = order_totalAmount   #금액 업데이트해준다, 혹시 나중에 금액 빼거나 추가할 때 업데이트 or 추가 중에 뭐가 더 좋을지 선택
+    Order_qs.save()
+    order_id = Order_qs.id  #주문번호
+    #BookOrder 쿼리 저장
+    if Book_stock == 1: #책주문리스트에 처음 책을 저장할 때, 책의개수가 1일 때, 새로운 쿼리를 생성해준다.
+        BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=Book_stock, BO_price=Book_price_add)
+        BookOrder_qs.save()
+    else:   #책주문리스트에 기존에 책이 있을경우, 책 수량 +1, 책 가격 +
+        BookOrder_qs = BookOrder.objects.filter(Book=Book_qs)   #책 쿼리 찾아서 데이터 넣어줘야됨
+        BookOrder_qs.BO_count += 1  #책 수량 추가
+        BookOrder_qs.BO_price += Book_qs.Book_price #책 가격을 한번더 더해준다.
+        BookOrder_qs.save() #쿼리 저장
+    #####################쿠폰 어떡할거야?#######################
+    #models에 BO_DC_price를 전체 할인가로 할것인가, 한개의 할인가로 할것인가
+    #orderPage.html 19번줄 수정해줘야됨
+    #리턴
+    BookOrder_qs = BookOrder.objects.filter(Order=Order.objects.get(id=order_id))   #주문번호에 해당하는 책주문리스트 가져온다.
+    context = {'User': User_qs, 'BookOrder_list': BookOrder_qs} #책주문리스트에 저장된값들: 책 수량, 책 가격
     return render(request, 'bookstore/cartPage.html', context)
 
 
@@ -77,62 +109,61 @@ def cartdelPage(request, name, book_id):
     # 책 stock +1 해주기
     Book_qs.Book_stock += 1
     Book_qs.save()
+    #유저장바구니리스트(BookSB)에 책 빼주기 -1
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, Book=book_id) #장바구니에서 지워줄 책리스트 가져오기
+    BookSB_qs.first().delect()  #장바구니에 책 지워줌
+    #책주문내역리스트(BookOrder)에 책 빼주기 -1
+    ##주문내역생각하기 바로주문이랑 장바구니 구분해야됨
+    BookOrder_qs = BookOrder.objects.filter()
     #유저장바구니리스트에 책,장바구니 지우기
-    BookSB.objects.filter(Book=Book_qs).last().delete()    #중복된 책이 장바구니에 있을경우 가장 최근에 추가된것 지워준다.
-    #
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    context = {'User': User_qs, "BookSB_list": BookSB_qs}
-    return render(request, 'bookstore/cartPage.html', context)
+    #context = {'User': User_qs, "BookSB_list": BookSB_qs}
+    #return render(request, 'bookstore/cartPage.html', context)
 
 def orderConPage(request, name, book_id):   #주문 페이지 들어가기전에 쿼리 생성 및 저장
-    try:
-        #개인장바구니에 넣어서 구매하도록하자
-        User_qs = User.objects.get(User_name=name)
-        Card_qs = Card.objects.filter(User=User_qs).first() #카드 첫번째
-        SD_qs = ShippingDestination.objects.filter(User=User_qs).first() #집 첫번째
-        Book_qs = Book.objects.get(id=book_id)
-        SB_qs = ShoppingBasket.objects.get(User=User_qs)
-        #장바구니에 책 넣기
-        BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
-        BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-        #BookOrder 책 개수 저장하기
-        Book_stock = len(BookSB.objects.filter(Book=Book_qs))   #넘어온 책이 저장된 개수를 저장
-        #BookOrder 책 가격 넣기
-        Book_price_add = 0
-        for i in BookSB.objects.filter(Book=Book_qs):   #넘어온 책이 저장된 가격를 저장
-            Book_price_add += i.Book.Book_price
-        #Order -> 주문 총액 저장
-        order_totalAmount = 0
-        for i in BookSB_qs:
-            order_totalAmount += i.Book.Book_price
-        #Order 쿼리 저장
-        if len(BookSB.objects.filter(ShoppingBasket=SB_qs))==1:   #처음 저장할 때, 주문을 만들어준다, 주문 진행 할 때는 이걸로 계속 진행함
-            Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=order_totalAmount)
-            Order_qs.save()
-        else:   #주문리스트에 저장돼 있을경우 데이터 업데이트해준다.
-            Order_qs = Order.objects.filter(User=User_qs).last()    #최신 주문가져오기
-            Order_qs.Order_totalprice = order_totalAmount   #금액 업데이트해준다, 혹시 나중에 금액 빼거나 추가할 때 업데이트 or 추가 중에 뭐가 더 좋을지 선택
-            Order_qs.save()
-        order_id = Order_qs.id  #주문번호
-        #BookOrder 쿼리 저장
-        if Book_stock == 1: #책주문리스트에 처음 책을 저장할 때, 책의개수가 1일 때, 새로운 쿼리를 생성해준다.
-            BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=Book_stock, BO_price=Book_price_add)
-            BookOrder_qs.save()
-        else:   #책주문리스트에 기존에 책이 있을경우, 책 수량 +1, 책 가격 +
-            BookOrder_qs = BookOrder.objects.filter(Book=Book_qs)   #책 쿼리 찾아서 데이터 넣어줘야됨
-            BookOrder_qs.BO_count += 1  #책 수량 추가
-            BookOrder_qs.BO_price += Book_qs.Book_price #책 가격을 한번더 더해준다.
-            BookOrder_qs.save() #쿼리 저장
-        #####################쿠폰 어떡할거야?#######################
-        #models에 BO_DC_price를 전체 할인가로 할것인가, 한개의 할인가로 할것인가
-        #orderPage.html 19번줄 수정해줘야됨
-        #리턴
-        BookOrder_qs = BookOrder.objects.filter(Order=Order.objects.get(id=order_id))   #주문번호에 해당하는 책주문리스트 가져온다.
-        context = {'User': User_qs, 'BookOrder_list': BookOrder_qs, 'SD': SD_qs, 'CD': Card_qs} #책주문리스트에 저장된값들: 책 수량, 책 가격
-        return render(request, 'bookstore/orderPage.html', context)
-    except:
-        BookOrder_qs = BookOrder.objects.filter(Order=Order.objects.get)
-#수정해야됨
+    #개인장바구니에 넣어서 구매하도록하자
+    User_qs = User.objects.get(User_name=name)
+    Card_qs = Card.objects.filter(User=User_qs).first() #카드 첫번째
+    SD_qs = ShippingDestination.objects.filter(User=User_qs).first() #집 첫번째
+    Book_qs = Book.objects.get(id=book_id)
+    SB_qs = ShoppingBasket.objects.get(User=User_qs)
+    #장바구니에 책 넣기
+    BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
+    #BookOrder 책 개수 저장하기
+    Book_stock = len(BookSB.objects.filter(Book=Book_qs))   #넘어온 책이 저장된 개수를 저장
+    #BookOrder 책 가격 넣기
+    Book_price_add = 0
+    for i in BookSB.objects.filter(Book=Book_qs):   #넘어온 책이 저장된 가격를 저장
+        Book_price_add += i.Book.Book_price
+    #Order -> 주문 총액 저장
+    order_totalAmount = 0
+    for i in BookSB_qs:
+        order_totalAmount += i.Book.Book_price
+    #Order 쿼리 저장
+    if len(BookSB.objects.filter(ShoppingBasket=SB_qs))==1:   #처음 저장할 때, 주문을 만들어준다, 주문 진행 할 때는 이걸로 계속 진행함
+        Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=order_totalAmount)
+        Order_qs.save()
+    else:   #주문리스트에 저장돼 있을경우 데이터 업데이트해준다.
+        Order_qs = Order.objects.filter(User=User_qs).last()    #최신 주문가져오기
+        Order_qs.Order_totalprice = order_totalAmount   #금액 업데이트해준다, 혹시 나중에 금액 빼거나 추가할 때 업데이트 or 추가 중에 뭐가 더 좋을지 선택
+    Order_qs.save()
+    order_id = Order_qs.id  #주문번호
+    #BookOrder 쿼리 저장
+    if Book_stock == 1: #책주문리스트에 처음 책을 저장할 때, 책의개수가 1일 때, 새로운 쿼리를 생성해준다.
+        BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=Book_stock, BO_price=Book_price_add)
+        BookOrder_qs.save()
+    else:   #책주문리스트에 기존에 책이 있을경우, 책 수량 +1, 책 가격 +
+        BookOrder_qs = BookOrder.objects.filter(Book=Book_qs)   #책 쿼리 찾아서 데이터 넣어줘야됨
+        BookOrder_qs.BO_count += 1  #책 수량 추가
+        BookOrder_qs.BO_price += Book_qs.Book_price #책 가격을 한번더 더해준다.
+        BookOrder_qs.save() #쿼리 저장
+    #####################쿠폰 어떡할거야?#######################
+    #models에 BO_DC_price를 전체 할인가로 할것인가, 한개의 할인가로 할것인가
+    #orderPage.html 19번줄 수정해줘야됨
+    #리턴
+    BookOrder_qs = BookOrder.objects.filter(Order=Order.objects.get(id=order_id))   #주문번호에 해당하는 책주문리스트 가져온다.
+    context = {'User': User_qs, 'BookOrder_list': BookOrder_qs, 'SD': SD_qs, 'CD': Card_qs} #책주문리스트에 저장된값들: 책 수량, 책 가격
+    return render(request, 'bookstore/orderPage.html', context)
 
 
 def orderPage(request, BookOrder_id):

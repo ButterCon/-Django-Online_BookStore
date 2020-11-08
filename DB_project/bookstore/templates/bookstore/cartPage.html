@@ -10,9 +10,12 @@
     <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
     <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a></br>
     <a href="{% url 'bookstore:order' User.User_name %}">구매하기</a></br></br></br>
-    {% for i in BookSB_list %}
-        <p style="display:inline"><b>{{i.Book.Book_name}}</b></p>
-        <!--orderPage참고해서 수정하기-->
+    {% for i in BookOrder_list %}
+        <p style="display:inline">{{i.Book.Book_name}}</p><!--책이름-->
+        <p style="display:inline">{{i.Book.Book_price}}</p><!--책정가-->
+        <p style="display:inline">{{i.BO_DC_price}}</p><!--책할인가-->
+        <p style="display:inline">{{i.BO_count}}</p><!--책수량-->
+        <p style="display:inline">{{i.BO_price}}</p><!--책할인가합계-->
         <a href="{% url 'bookstore:cartdel' User.User_name i.Book.id%}">장바구니 지우기</a> </br>
     {% endfor %}
 </body>

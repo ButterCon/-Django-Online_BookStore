@@ -5,7 +5,7 @@ app_name = "bookstore"
 
 urlpatterns = [
     path('<str:name>/home/', views.homePage, name='home'),
-    path('<int:BookOrder_id>/order/', views.orderPage, name='order'),
+    path('<str:name>/<int:BookOrder_id>/order/', views.orderPage, name='order'),
     path('<str:name>/<int:book_id>/order/', views.orderConPage, name='ordercon'),
     path('<str:name>/orderdone/', views.orderdonePage, name='orderdone'),
     path('<str:name>/cart/', views.cartPage, name='cart'),

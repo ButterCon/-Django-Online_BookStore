@@ -42,11 +42,10 @@ def homePage(request, name):
 
 def cartPage(request, name):
     User_qs = User.objects.get(User_name=name)
-    SB_qs = ShoppingBasket.objects.get(User=User_qs)
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #유저 장바구니 불러오기
-    Order_qs = Order.objects.get(User=User_qs)
+    #Order_qs id로 넣어야됨
+    Order_qs = Order.objects.filter(User=User_qs).last()    #마지막 장바구니
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs}
+    context = {'User': User_qs, 'Order_list': Order_qs, 'BookOrder_list': BookOrder_qs}
     return render(request, 'bookstore/cartPage.html', context)
 
 

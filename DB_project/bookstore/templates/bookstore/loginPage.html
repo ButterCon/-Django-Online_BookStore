@@ -6,7 +6,7 @@
 </head>
 <body>
     <h3>도서구매사이트</h3>
-    {% if User_list %}
+    {% if User %}
         <p> {{User.User_name}}님 환영합니다.</p>
         <a href="{% url 'bookstore:home' User.User_name %}">홈페이지</a>
     {% else %}

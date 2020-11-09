@@ -16,7 +16,7 @@
         <p style="display:inline">{{i.BO_DC_price}}</p><!--책할인가-->
         <p style="display:inline">{{i.BO_count}}</p><!--책수량-->
         <p style="display:inline">{{i.BO_price}}</p><!--책할인가합계-->
-        <a href="{% url 'bookstore:cartdel' User.User_name i.Book.id%}">장바구니 지우기</a> </br>
+        <a href="{% url 'bookstore:cartdel' User.User_name i.Order.id i.Book.id%}">장바구니 지우기</a> </br>
     {% endfor %}
 </body>
 </html>

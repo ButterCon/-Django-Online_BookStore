@@ -44,6 +44,8 @@ def cartPage(request, name):
     User_qs = User.objects.get(User_name=name)
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #유저 장바구니 불러오기
+    Order_qs = Order.objects.get(User=User_qs)
+    BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
     context = {'User': User_qs, 'BookSB_list': BookSB_qs}
     return render(request, 'bookstore/cartPage.html', context)
 
@@ -99,25 +101,34 @@ def cartaddPage(request, name, book_id):
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def cartdelPage(request, name, book_id):
+def cartdelPage(request, name,Order_id ,book_id):
     #장바구니 페이지에서 장바구니 지우기 클릭시 이벤트
     #책 재고량 +1
     #User 장바구니에 Book 제거
     User_qs = User.objects.get(User_name=name)
     Book_qs = Book.objects.get(id=book_id)  #지워야하는 책 쿼리 가져옴
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
+    Order_qs = Order.objects.get(id=Order_id)   #현재 진행중인 카트id가져오기
     # 책 stock +1 해주기
     Book_qs.Book_stock += 1
     Book_qs.save()
     #유저장바구니리스트(BookSB)에 책 빼주기 -1
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, Book=book_id) #장바구니에서 지워줄 책리스트 가져오기
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, Book=Book_qs) #장바구니에서 지워줄 책리스트 가져오기
     BookSB_qs.first().delect()  #장바구니에 책 지워줌
     #책주문내역리스트(BookOrder)에 책 빼주기 -1
-    ##주문내역생각하기 바로주문이랑 장바구니 구분해야됨
-    BookOrder_qs = BookOrder.objects.filter()
+    #BookOrder에 책가격 뺴주기
+    BookOrder_qs = BookOrder.objects.filter(Order=Order_qs, Book=Book_qs) #책주문내역에 가져옴 책
+    if BookOrder_qs.BO_count == 1:  #책이 하나만 들어있을 경우
+        BookOrder_qs.delete()
+    elif BookOrder_qs.BO_count > 1: #책이 하나이상 들어있을 경우
+        BookOrder_qs.BO_count += -1
+        BookOrder_qs.BO_price += -Book_qs.Book_price    #책가격 뺴주기
+        Order_qs.Order_totalprice += -Book_qs.Book_price
+        Order_qs.save()
+        BookOrder_qs.save()
     #유저장바구니리스트에 책,장바구니 지우기
-    #context = {'User': User_qs, "BookSB_list": BookSB_qs}
-    #return render(request, 'bookstore/cartPage.html', context)
+    context = {'User': User_qs, "BookOrder_list": BookOrder_qs}
+    return render(request, 'bookstore/cartPage.html', context)
 
 def orderConPage(request, name, book_id):   #주문 페이지 들어가기전에 쿼리 생성 및 저장
     #개인장바구니에 넣어서 구매하도록하자
@@ -166,6 +177,7 @@ def orderConPage(request, name, book_id):   #주문 페이지 들어가기전에
     return render(request, 'bookstore/orderPage.html', context)
 
 
+#수정해야됨, cartPage.html 12번줄 구매하기 수정해주기, 전달값 수정, 이름만 가면 안됨
 def orderPage(request, BookOrder_id):
     BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
     context = {'BookOrder_list': BookOrder_qs}

@@ -1,0 +1,15 @@
+homepage(User_name) ->
+	장바구니,cart(User_name, BookSB)
+	장바구니추가cartadd(User_name, BookSB)
+	바로구매ordercon(User_name, BookSB)
+
+cartpage(User_name, BookSB_list) ->
+	장바구니지우기,cartdel(User_name, Book_id)
+	구매하기,order(User_name)
+
+User_name으로가질수있는것
+ShoppingBasket, BookSB
+
+마지막 주문할 때 넣어주는건 어떤가
+
+책 장바구니에 추가하고 저장하기

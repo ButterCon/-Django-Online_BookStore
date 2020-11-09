@@ -5,19 +5,24 @@
     <title>CouponSelectPage</title>
 </head>
 <body>
-    <h3 style="display:inline">{{BookOrder_list.Order.User.User_name}}님 쿠폰사용페이지</h3>
+    <h3 style="display:inline">{{User.User_name }}님 쿠폰사용페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:userinfo' BookOrder_list.Order.User.User_name %}">정보수정</a>
-    <a href="{% url 'bookstore:home' BookOrder_list.Order.User.User_name %}">홈으로</a>
-    <a href="{% url 'bookstore:cart' BookOrder_list.Order.User.User_name %}">장바구니</a></br></br></br>
-    <form action = "{% url 'bookstore:order' BookOrder_list.id %}" method="post">
-        쿠폰선택<br>
-        <select name = "coupon_list" multiple>
-            <option value=""
-        </select>
-    </form>
-    {% for i in CP_list %}
-        <a href="{% url 'bookstore:couponselectCon'  %}">{{i.CP_kind}}</a>
-    {% endfor%}
+    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a></br></br></br></br>
+    <a href="{% url 'bookstore:CPorder' User.User_name Order_id%}">주문내역으로 돌아가기</a></br></br>
+    {% if BookOrder_list %}
+        {% for i in CP_list %}
+            <a href="{% url 'bookstore:couponDC' User.User_name BookOrder_list.id i.id %}">{{i.CP_kind}}</a></br></br>
+        {% endfor%}
+    {% endif %}
+    {% if DC_BookOrder_list %}
+        {% for i in CP_list %}
+            {% if i.CP_kind == DC_BookOrder_list.CP_kind %}
+                {{i.CP_kind}} (선택됨)</br></br>
+            {% else %}
+                <a href="{% url 'bookstore:couponDC' User.User_name DC_BookOrder_list.id i.id %}">{{i.CP_kind}}</a></br></br>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 </body>
 </html>

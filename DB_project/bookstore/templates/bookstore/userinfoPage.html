@@ -7,7 +7,7 @@
 <body>
     <h3 style="display:inline">회원수정</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:home' User_list.User_name %}">이전페이지</a>
+    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a>
     <a href="{% url 'bookstore:coupon' User_list.User_name %}">내쿠폰 보기</a></br></br></br>
     <form action="{% url 'bookstore:userinfo' User_list.User_name %}" method="post">
     {% csrf_token %}

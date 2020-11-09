@@ -7,13 +7,14 @@ urlpatterns = [
     path('login/', views.loginPage, name='login'),
     path('<str:name>/home/', views.homePage, name='home'),
     ############################주문####################################
-    path('<str:name>/order/', views.orderPage, name='order'),
-    path('<str:name>/<int:book_id>/order/', views.orderConPage, name='ordercon'),
+    path('<str:name>/<int:Order_id>/order/', views.orderPage, name='order'),
+    path('<str:name>/<int:Order_id>/CPorder/', views.CPorderPage, name='CPorder'),
+    path('<str:name>/<int:Book_id>/sinorder/', views.sinorderPage, name='sinorder'),
     path('<str:name>/orderdone/', views.orderdonePage, name='orderdone'),
     ############################장바구니#################################
-    path('<str:name>/cart/', views.cartPage, name='cart'),
-    path('<str:name>/<int:book_id>/cart/', views.cartaddPage, name='cartadd'),
-    path('<str:name>/<int:book_id>/cart/', views.cartdelPage, name='cartdel'),
+    path('<str:name>/<int:Order_id>/cart/', views.cartPage, name='cart'),
+    path('<str:name>/<int:book_id>/<int:Order_id>/cartadd/', views.cartaddPage, name='cartadd'),
+    path('<str:name>/<int:book_id>/<int:Order_id>/cartdel/', views.cartdelPage, name='cartdel'),
     ############################회원가입#################################
     path('reg/', views.regPage, name='reg'),
     path('regCon/', views.regConPage, name='regCon'),
@@ -23,5 +24,6 @@ urlpatterns = [
     path('<str:name>/cardadd/', views.cardaddPage, name='cardadd'),
     ############################쿠폰####################################
     path('<str:name>/coupon/', views.couponPage, name='coupon'),    #회원수정->쿠폰
-    path('<int:BookOrder_id>/couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰
+    path('<str:name>/<int:BookOrder_id>/couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰
+    path('<str:name>/<int:BookOrder_id>/<int:coupon_id>/couponDC/', views.CouponDCpage, name='couponDC'),    #쿠폰 할인 값 넣기
 ]

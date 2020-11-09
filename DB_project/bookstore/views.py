@@ -12,7 +12,6 @@ from .models import BookOrder
 from .models import Coupon
 import datetime
 
-
 # Create your views here.
 def loginPage(request):
     if request.method == "POST":
@@ -36,19 +35,26 @@ def loginPage(request):
 def homePage(request, name):
     User_qs = User.objects.get(User_name=name)
     Book_qs = Book.objects.all()
-    context = {'User': User_qs, 'Book_list': Book_qs}
+    #Order 생성                   !!!!!!꼭 cart들어갔다 나가면 삭제해야됨 !!!!!!!!
+    Order_qs = Order(User=User_qs)
+    Order_qs.save()
+    context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
     return render(request, 'bookstore/homePage.html', context)
 
 
-def cartPage(request, name):
+def cartPage(request, name, Order_id):
     User_qs = User.objects.get(User_name=name)
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs}
+    #총가격
+    total = 0
+    for i in BookSB_qs:
+        total += i.Book.Book_price
+    context = {'User': User_qs, 'BookSB_list': BookSB_qs, 'Order_id': Order_id, 'Book_total_price': total}
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def cartaddPage(request, name, book_id):
+def cartaddPage(request, name, book_id, Order_id):
     # 홈에서 장바구니 클릭시 이벤트
     # 책 재고량 -1
     # 책 재고량 수정하고 나머지는 orderCon이라 같음
@@ -62,11 +68,15 @@ def cartaddPage(request, name, book_id):
     #장바구니에 책 넣기
     BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #장바구니 가져오기
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs}
+    #총가격
+    total = 0
+    for i in BookSB_qs:
+        total += i.Book.Book_price
+    context = {'User': User_qs, 'BookSB_list': BookSB_qs, 'Book_total_price': total, 'Order_id': Order_id}
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def cartdelPage(request, name, book_id):
+def cartdelPage(request, name, book_id, Order_id):
     #장바구니 페이지에서 장바구니 지우기 클릭시 이벤트
     #책 재고량 +1
     #User 장바구니에 Book 제거
@@ -77,94 +87,127 @@ def cartdelPage(request, name, book_id):
     Book_qs.Book_stock += 1
     Book_qs.save()
     #유저장바구니리스트(BookSB)에 책 빼주기 -1
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, Book=Book_qs) #장바구니에서 지워줄 책리스트 가져오기
-    BookSB_qs.first().delete()  #장바구니에 책 지워줌
-    #유저장바구니리스트에 책,장바구니 지우기
-    context = {'User': User_qs, "BookSB_list": BookSB_qs}
+    BookSB_qs = BookSB.objects.filter(Book=Book_qs) #장바구니에서 지워줄 책리스트 가져오기
+    BookSB_qs.last().delete()  #장바구니에 책 지워줌
+    #총가격
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
+    total = 0
+    for i in BookSB_qs:
+        total += i.Book.Book_price
+    context = {'User': User_qs, "BookSB_list": BookSB_qs, 'Book_total_price': total, 'Order_id': Order_id}
     return render(request, 'bookstore/cartPage.html', context)
 
-def orderConPage(request, name, book_id):   #주문 페이지 들어가기전에 쿼리 생성 및 저장
-    #개인장바구니에 넣어서 구매하도록하자
+
+def orderPage(request, name, Order_id):
     User_qs = User.objects.get(User_name=name)
-    Card_qs = Card.objects.filter(User=User_qs).first() #카드 첫번째
-    SD_qs = ShippingDestination.objects.filter(User=User_qs).first() #집 첫번째
-    Book_qs = Book.objects.get(id=book_id)
+    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
+    Card_qs = Card.objects.filter(User=User_qs).first()
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
-    #장바구니에 책 넣기
-    BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    #BookOrder 책 개수 저장하기
-    Book_stock = len(BookSB.objects.filter(Book=Book_qs))   #넘어온 책이 저장된 개수를 저장
-    #BookOrder 책 가격 넣기
-    Book_price_add = 0
-    for i in BookSB.objects.filter(Book=Book_qs):   #넘어온 책이 저장된 가격를 저장
-        Book_price_add += i.Book.Book_price
-    #Order -> 주문 총액 저장
-    order_totalAmount = 0
+    Order_qs = Order.objects.get(id=Order_id)
+    total_price = 0 #총 금액
     for i in BookSB_qs:
-        order_totalAmount += i.Book.Book_price
-    #Order 쿼리 저장
-    if len(BookSB.objects.filter(ShoppingBasket=SB_qs))==1:   #처음 저장할 때, 주문을 만들어준다, 주문 진행 할 때는 이걸로 계속 진행함
-        Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=order_totalAmount)
+        total_price += i.Book.Book_price  #모든 책 가격 더하기
         Order_qs.save()
-    else:   #주문리스트에 저장돼 있을경우 데이터 업데이트해준다.
-        Order_qs = Order.objects.filter(User=User_qs).last()    #최신 주문가져오기
-        Order_qs.Order_totalprice = order_totalAmount   #금액 업데이트해준다, 혹시 나중에 금액 빼거나 추가할 때 업데이트 or 추가 중에 뭐가 더 좋을지 선택
+        print(Order_qs.Order_totalprice)
+        qs = BookOrder(Book=i.Book, Order=Order_qs, BO_count=1, BO_price=i.Book.Book_price)
+        qs.save()
+    BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
+    for i in BookOrder_qs:
+        for j in BookOrder_qs:
+            if i.id != j.id:
+                if i.Book.id == j.Book.id:
+                    j.delete()
+                    i.BO_count += 1
+                    i.BO_price += i.Book.Book_price
+                    i.save()
+    BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
+    context = {"User": User_qs, "BookOrder_list": BookOrder_qs,"Order_date": str(datetime.datetime.now()), "total_price": total_price, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+    return render(request, 'bookstore/orderPage.html', context)
+
+
+def sinorderPage(request, name, Book_id):
+    User_qs = User.objects.get(User_name=name)
+    Book_qs = Book.objects.get(id=Book_id)
+    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
+    Card_qs = Card.objects.filter(User=User_qs).first()
+    Order_id = Order.objects.filter(User=User_qs).last().id #홈의 오더 id
+    Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=Book_qs.Book_price)
     Order_qs.save()
-    order_id = Order_qs.id  #주문번호
-    #BookOrder 쿼리 저장
-    if Book_stock == 1: #책주문리스트에 처음 책을 저장할 때, 책의개수가 1일 때, 새로운 쿼리를 생성해준다.
-        BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=Book_stock, BO_price=Book_price_add)
-        BookOrder_qs.save()
-    else:   #책주문리스트에 기존에 책이 있을경우, 책 수량 +1, 책 가격 +
-        BookOrder_qs = BookOrder.objects.filter(Book=Book_qs)   #책 쿼리 찾아서 데이터 넣어줘야됨
-        BookOrder_qs.BO_count += 1  #책 수량 추가
-        BookOrder_qs.BO_price += Book_qs.Book_price #책 가격을 한번더 더해준다.
-        BookOrder_qs.save() #쿼리 저장
-    #####################쿠폰 어떡할거야?#######################
-    #models에 BO_DC_price를 전체 할인가로 할것인가, 한개의 할인가로 할것인가
-    #orderPage.html 19번줄 수정해줘야됨
-    #리턴
-    BookOrder_qs = BookOrder.objects.filter(Order=Order.objects.get(id=order_id))   #주문번호에 해당하는 책주문리스트 가져온다.
-    context = {'User': User_qs, 'BookOrder_list': BookOrder_qs, 'SD': SD_qs, 'CD': Card_qs} #책주문리스트에 저장된값들: 책 수량, 책 가격
+    BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=1, BO_price=Book_qs.Book_price)
+    BookOrder_qs.save()
+    BookOrder_qs = BookOrder.objects.get(Order=Order_qs)
+
+    context = {'User': User_qs, 'sinBookOrder_list': BookOrder_qs, 'Order_id': Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
-#수정해야됨, cartPage.html 12번줄 구매하기 수정해주기, 전달값 수정, 이름만 가면 안됨
-def orderPage(request, BookOrder_id):
-    BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
-    context = {'BookOrder_list': BookOrder_qs}
+def CPorderPage(request, name, Order_id):
+    User_qs = User.objects.get(User_name=name)
+    Order_qs = Order.objects.get(id=Order_id)
+    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
+    Card_qs = Card.objects.filter(User=User_qs).first()
+    BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
+
+    context = {"User": User_qs, "BookOrder_list": BookOrder_qs, "Order_date": str(datetime.datetime.now()), "total_price": Order_qs.Order_totalprice, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
-def couponselectPage(request, name, BookOrder_id, BookSB_id):
-    print("쿠폰선택페이지")
+def orderdonePage(request, name):
+    #BookSB초기화
+    User_qs = User.objects.get(User_name=name)
+    SB_qs = ShoppingBasket.objects.get(User=User_qs)
+    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
+    for i in BookSB_qs:
+        i.delete()
+    context = {"User": User_qs}
+    return render(request, 'bookstore/orderdonePage.html', context)
 
 
-def couponselectPage(request, BookOrder_id):
+def couponselectPage(request, name, BookOrder_id):
+    User_qs = User.objects.get(User_name=name)
     BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
-    #쿠폰 선택 후 선택 html 반환
-    #쿠폰 취소 추가
-    #쿠폰 취소시 기존 orderpage로 이동
-    context = {'BookOrder_list': BookOrder_qs}
+    CP_qs = Coupon.objects.filter(User=User_qs)
+    context = {"User": User_qs, 'BookOrder_list': BookOrder_qs, 'CP_list': CP_qs, 'Order_id': BookOrder_qs.Order.id}
     return render(request, 'bookstore/couponselectPage.html', context)
+
+
+def CouponDCpage(request, name, BookOrder_id, coupon_id):
+    User_qs = User.objects.get(User_name=name)
+    BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
+    CP_qs = Coupon.objects.get(id=coupon_id)
+
+    BookOrder_qs.CP_kind = CP_qs.CP_kind    #쿠폰 이름 넣어주기
+    BookOrder_qs.save()
+
+    #할인하기전에 총값에 기존값 빼주기
+    BookOrder_qs.Order.Order_totalprice += -BookOrder_qs.BO_price
+    BookOrder_qs.save()
+
+    #할인값 저장해주기
+    if coupon_id == 1: #10퍼센트
+        BookOrder_qs.BO_DC_price = BookOrder_qs.BO_price - (BookOrder_qs.BO_price * 0.05)
+        BookOrder_qs.save()
+    elif coupon_id == 2:
+        BookOrder_qs.BO_DC_price = BookOrder_qs.BO_price - 1000
+        BookOrder_qs.save()
+
+    #할인적용한 총 가격 수정해주기
+    BookOrder_qs.Order.Order_totalprice += BookOrder_qs.BO_DC_price
+    BookOrder_qs.save()
+
+    CP_qs = Coupon.objects.filter(User=User_qs)
+    BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
+    context = {"User": User_qs, 'DC_BookOrder_list': BookOrder_qs, 'CP_list': CP_qs, 'Order_id': BookOrder_qs.Order.id}
+    return render(request, 'bookstore/couponselectPage.html', context)
+
 
 def couponPage(request, name):
     User_qs = User.objects.get(User_name=name)
     CP_qs = Coupon.objects.filter(User=User_qs)
-    context = {'User_list': User_qs, 'CP_list': CP_qs}
+    context = {'User': User_qs, 'CP_list': CP_qs}
 
     return render(request, 'bookstore/couponPage.html', context)
-
-
-#수정해야됨
-def orderdonePage(request, name):
-    #책 -1해줘야됨
-    print("주문완료 페이지")
-    User_qs = User.objects.get(User_name=name)
-    context = {'User_list': User_qs}
-    #책 장바구니 초기화 해야됨
-    return render(request, 'bookstore/orderdonePage.html', context)
 
 
 def regPage(request):

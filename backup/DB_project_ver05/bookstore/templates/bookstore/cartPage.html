@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset=UTF-8>
+    <title>cartPage</title>
+</head>
+<body>
+    <h3 style="display:inline">{{User.User_name}}님 장바구니</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a></br>
+    <a href="{% url 'bookstore:order' User.User_name Order_id%}">구매하기</a></br></br></br>
+    <p>총가격 : {{Book_total_price}}원</p>
+    {% for i in BookSB_list %}
+        <p style="display:inline">{{i.Book.Book_name}}</p><!--책이름-->
+        <p style="display:inline">{{i.Book.Book_price}}원</p><!--책정가-->
+        <a href="{% url 'bookstore:cartdel' User.User_name i.Book.id Order_id%}">장바구니 지우기</a></br>
+    {% endfor %}
+</body>
+</html>

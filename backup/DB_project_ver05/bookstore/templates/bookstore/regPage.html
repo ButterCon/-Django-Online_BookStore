@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset="UTF-8">
+    <title>회원가입</title>
+</head>
+<body>
+    <h3 style="display:inline">회원가입</h3>
+    <a href="{% url 'bookstore:login' %}">이전페이지</a>
+    <form action="{% url 'bookstore:regCon' %}" method="post">
+    {% csrf_token %}
+        이름 : <input type="text" name="name"></br>
+        아이디 : <input type="text" name="id"></br>
+        패스워드 : <input type="password" name="pw"></br>
+        패스워드확인 : <input type="password" name="re_pw"></br>
+        <p>주소 입력</p>
+        우편번호 : <input type="text" name="sd_num"></br>
+        기본주소 : <input type="text" name="sd_ba"></br>
+        상세주소 : <input type="text" name="sd_da"></br>
+        <p>카드 입력</p>
+        카드 이름 : <input type="text" name="card_name"></br>
+        카드 번호 : <input type="text" name="card_num"></br>
+        카드 유효기간 : <input type="text" name="card_date"></br>
+        <input type="submit" name="Register"></br>
+    </form>
+</body>
+</html>

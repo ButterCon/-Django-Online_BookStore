@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OrderConPage</title>
+</head>
+<body>
+    <h3 style="display:inline">{{BookOrder_list.first().Order.User.User_name}}님 구매확인페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:userinfo' BookOrder_list.first().Order.User.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' BookOrder_list.first().Order.User.User_name %}">홈으로</a>
+    <a href="{% url 'bookstore:cart' BookOrder_list.first().Order.User.User_name %}">장바구니</a></br></br></br>
+    <p>구매목록</p>
+    {% for i in BookOrder_list %}
+        {{i.Book.Book_name}}
+    {% endfor %}
+    <a href="{% url 'bookstore:order' BookOrder_list.first().Order.id %}">확인</a>
+</body>
+</html>

@@ -10,7 +10,9 @@
     <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a>
     <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
     {% for i in CP_list %}
-        <p>{{i.CP_kind}}</p>
+        {% if i.CP_received == 1 %}         <!-- 쿠폰사용여부 판단 -->
+            <p>{{i.CP_kind}}</p>
+        {% endif %}
     {% endfor%}
 </body>
 </html>

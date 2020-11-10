@@ -8,6 +8,7 @@ from .models import ShippingDestination
 from .models import BookSB
 from .models import BookOrder
 from .models import Coupon
+from .models import DongseoPay
 
 # Register your models here.
 admin.site.register(User)
@@ -19,3 +20,4 @@ admin.site.register(Book)
 admin.site.register(BookSB)
 admin.site.register(BookOrder)
 admin.site.register(Coupon)
+admin.site.register(DongseoPay)

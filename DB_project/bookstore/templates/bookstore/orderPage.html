@@ -27,7 +27,21 @@
             <a href="{% url 'bookstore:couponselect' User.User_name i.id %}"> 쿠폰 사용하기</a></br>
         {% endfor %}</br>
         <p>---------------------------------------------------------</p>
-        <p>총 상품금액 : {{total_price}}</p>
+        <p style="diplay:inline">총 상품금액 : {{total_price}}</p>
+        <p>---------------------------------------------------------</p>
+        {% if DP_list %}
+            <p>동서페이 사용</p>
+            <form action="{% url 'bookstore:dpuse' User.User_name BookOrder_list.id %}" method="post">
+            {% csrf_token %}
+                사용금액 : <input type="text" name="price">
+                <input type="submit" name="Register"></br>
+            </form>
+        {% elif DPused_list %}
+            <p>동서페이 사용금액</p>
+            {{useDP_price}}
+            <p>카드 결제 금액</p>
+            {{BookOrder_list.Order.Order_totalprice}}
+        {% endif %}
         <p>---------------------------------------------------------</p>
         <p>주문일자 : {{Order_date}}</p>
         <p>---------------------------------------------------------</p>
@@ -39,7 +53,7 @@
         <p>배송지 기본주소 : {{SD_list.SD_ba}}</p>
         <p>배송지 상세주소 : {{SD_list.SD_da}}</p>
     {% endif %}
-    {% if sinBookOrder_list%}   <!--바로구매일경우-->
+    {% if sinBookOrder_list %}   <!--바로구매일경우-->
         <p style="display:inline">{{sinBookOrder_list.Book.Book_name}}</p><!--책이름-->
         <p style="display:inline">{{sinBookOrder_list.Book.Book_price}}</p><!--책정가-->
         <p style="display:inline">{{sinBookOrder_list.BO_DC_price}}</p><!--책할인가-->
@@ -49,7 +63,22 @@
         <p>---------------------------------------------------------</p>
         <p>총 상품금액 : {{sinBookOrder_list.Order.Order_totalprice}}</p>
         <p>---------------------------------------------------------</p>
+        {% if DP_list %}
+            <p>동서페이 사용</p>
+            <form action="{% url 'bookstore:dpuse' User.User_name BookOrder_list.id %}" method="post">
+            {% csrf_token %}
+                사용금액 : <input type="text" name="price">
+                <input type="submit" name="Register"></br>
+            </form>
+        {% elif DPused_list %}
+            <p>동서페이 사용금액</p>
+            {{useDP_price}}
+            <p>카드 결제 금액</p>
+            {{BookOrder_list.Order.Order_totalprice}}
+        {% endif %}
+        <p>---------------------------------------------------------</p>
         <p>주문일자 : {{sinBookOrder_list.Order.Order_date}}</p>
+        <p>---------------------------------------------------------</p>
         <p>신용카드 종류 : {{Card_list.Card_name}}</p>
         <p>신용카드 번호 : {{Card_list.Card_num}}</p>
         <p>신용카드 유효기간 : {{Card_list.Card_date}}</p>

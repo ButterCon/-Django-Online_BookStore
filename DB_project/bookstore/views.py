@@ -10,6 +10,7 @@ from .models import Book
 from .models import BookSB
 from .models import BookOrder
 from .models import Coupon
+from .models import DongseoPay
 import datetime
 
 # Create your views here.
@@ -112,6 +113,7 @@ def cartdelPage(request, name, book_id, Order_id):
 
 def orderPage(request, name, Order_id):
     User_qs = User.objects.get(User_name=name)
+    DP_qs = DongseoPay.objects.get(User=User_qs)
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
     Card_qs = Card.objects.filter(User=User_qs).first()
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
@@ -134,7 +136,9 @@ def orderPage(request, name, Order_id):
                     i.BO_price += i.Book.Book_price
                     i.save()
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
-    context = {"User": User_qs, "BookOrder_list": BookOrder_qs,"Order_date": str(datetime.datetime.now()), "total_price": total_price, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+
+    useDP_price = 0
+    context = {"User": User_qs,"useDP_price": useDP_price, "BookOrder_list": BookOrder_qs,"Order_date": str(datetime.datetime.now()), "total_price": total_price, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
@@ -142,6 +146,7 @@ def sinorderPage(request, name, Book_id):
     User_qs = User.objects.get(User_name=name)
     Book_qs = Book.objects.get(id=Book_id)
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
+    DP_qs = DongseoPay.objects.get(User=User_qs)    #동서페이
     Card_qs = Card.objects.filter(User=User_qs).first()
     Order_id = Order.objects.filter(User=User_qs).last().id #홈의 오더 id
     Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=Book_qs.Book_price)
@@ -150,18 +155,21 @@ def sinorderPage(request, name, Book_id):
     BookOrder_qs.save()
     BookOrder_qs = BookOrder.objects.get(Order=Order_qs)
 
-    context = {'User': User_qs, 'sinBookOrder_list': BookOrder_qs, 'Order_id': Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+    useDP_price = 0
+    context = {'User': User_qs,"useDP_price": useDP_price, "DP_list": DP_qs, 'sinBookOrder_list': BookOrder_qs, 'Order_id': Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
 def CPorderPage(request, name, Order_id):
     User_qs = User.objects.get(User_name=name)
+    DP_qs = DongseoPay.objects.get(User=User_qs)
     Order_qs = Order.objects.get(id=Order_id)
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
     Card_qs = Card.objects.filter(User=User_qs).first()
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
 
-    context = {"User": User_qs, "BookOrder_list": BookOrder_qs, "Order_date": str(datetime.datetime.now()), "total_price": Order_qs.Order_totalprice, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+    useDP_price = 0
+    context = {"User": User_qs,"useDP_price": useDP_price, "DP_list": DP_qs, "BookOrder_list": BookOrder_qs, "Order_date": str(datetime.datetime.now()), "total_price": Order_qs.Order_totalprice, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
@@ -292,7 +300,7 @@ def userinfoPage(request, name):
         User_qs = User.objects.get(User_name=name)
         SD_qs = ShippingDestination.objects.get(User=User_qs)
         Card_qs = Card.objects.get(User=User_qs)
-        context = {'User_list': User_qs, 'SD_list': SD_qs, 'Card_list': Card_qs}
+        context = {'User': User_qs, 'SD_list': SD_qs, 'Card_list': Card_qs}
         return render(request, 'bookstore/userinfoPage.html', context)
 
 
@@ -324,3 +332,36 @@ def cardaddPage(request, name):
     Card_qs = Card.objects.filter(User=User_qs)
     context = {'User_list': User_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/cardaddPage.html', context)
+
+
+def dpserchPage(request, name):
+    User_qs = User.objects.get(User_name=name)
+    DP_qs = DongseoPay.objects.get(User=User_qs)
+    context = {'User': User_qs, "DP_list": DP_qs}
+
+    return render(request, 'bookstore/dpserchPage.html', context)
+
+
+def dpusePage(request, name, BookOrder_id):
+    User_qs = User.objects.get(User_name=name)
+    DP_qs = DongseoPay.objects.get(User=User_qs)
+    BookOrder_qs = BookOrder.objects.get(id=BookOrder_id)
+    order_id = BookOrder_qs.Order.id
+    Order_qs = Order.objects.get(id=order_id)
+    useDP_price = int(request.POST['price'])
+
+    DP_qs.TradingDate = datetime.datetime.now()
+    DP_qs.DP_UsedPrice += useDP_price   #사용금액 더해주기
+    DP_qs.DP_price -= useDP_price   #잔액 뺴주기
+    DP_qs.DP_history = BookOrder_qs.Order.id
+    DP_qs.save()
+    print(DP_qs)
+    #order 금액 뺴주기
+    Order_qs.Order_totalprice -= useDP_price
+    Order_qs.save()
+
+    BO_id = BookOrder_qs.id
+
+    BookOrder_qs = BookOrder.objects.filter(id=BookOrder_id)
+    context = {'User': User_qs,"BookOrder_list_id": BO_id, "useDP_price": useDP_price, 'sinBookOrder_list': BookOrder_qs, "DP_list": DP_qs, "DPused_list": DP_qs, 'Order_id': order_id}
+    return render(request, 'bookstore/OrderPage.html', context)

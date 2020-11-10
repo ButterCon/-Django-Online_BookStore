@@ -35,11 +35,23 @@ def loginPage(request):
 def homePage(request, name):
     User_qs = User.objects.get(User_name=name)
     Book_qs = Book.objects.all()
-    #Order 생성                   !!!!!!꼭 cart들어갔다 나가면 삭제해야됨 !!!!!!!!
-    Order_qs = Order(User=User_qs)
-    Order_qs.save()
-    context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
-    return render(request, 'bookstore/homePage.html', context)
+    #Order.Order_con == 0 일경우 삭제
+    try:
+        Order_qs = Order.objects.filter(User=User_qs)   #현재유저의 주문목록 가져온다
+        for i in Order_qs:
+            if i.Order_con == 0:
+                i.delete()  #주문목록중에 주문완료가 안된쿼리가 있으면 삭제해준다.
+        #Order 생성                   !!!!!!꼭 cart들어갔다 나가면 삭제해야됨 !!!!!!!!
+        Order_qs = Order(User=User_qs)
+        Order_qs.save()
+        context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
+        return render(request, 'bookstore/homePage.html', context)
+    except:
+        #Order 생성                   !!!!!!꼭 cart들어갔다 나가면 삭제해야됨 !!!!!!!!
+        Order_qs = Order(User=User_qs)
+        Order_qs.save()
+        context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
+        return render(request, 'bookstore/homePage.html', context)
 
 
 def cartPage(request, name, Order_id):
@@ -153,11 +165,14 @@ def CPorderPage(request, name, Order_id):
     return render(request, 'bookstore/orderPage.html', context)
 
 
-def orderdonePage(request, name):
+def orderdonePage(request, name, Order_id):
     #BookSB초기화
     User_qs = User.objects.get(User_name=name)
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
+    Order_qs = Order.objects.get(id=Order_id)
+    Order_qs.Order_con = 1
+    Order_qs.save()
     for i in BookSB_qs:
         i.delete()
     context = {"User": User_qs}

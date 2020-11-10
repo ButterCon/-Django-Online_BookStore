@@ -12,14 +12,18 @@
     <a href="{% url 'bookstore:cart' User.User_name Order_id %}">장바구니</a></br></br></br>
     <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
     <a href="{% url 'bookstore:orderdone' User.User_name Order_id %}">구매하기</a></br></br>
-    <p>상품명 / 정가 / 할인가 / 수량 / 합계 / 쿠폰</p>
+    <p>상품명 / 정가 / 수량 / 합계(/쿠폰할인가) / 쿠폰</p>
     {% if BookOrder_list %}     <!--장바구니구매할경우-->
         {% for i in BookOrder_list %}
             <p style="display:inline">{{i.Book.Book_name}} /</p><!--책이름-->
             <p style="display:inline">{{i.Book.Book_price}} /</p><!--책정가-->
-            <p style="display:inline">{{i.BO_DC_price}} /</p><!--책할인가-->
             <p style="display:inline">{{i.BO_count}} /</p><!--책수량-->
-            <p style="display:inline">{{i.BO_price}}</p><!--책할인가합계-->
+            {% if i.BO_DC_price == 0 %}
+                <p style="display:inline">{{i.BO_price}}</p><!--책정가합계-->
+            {% else %}
+                <p style="display:inline">{{i.BO_price}}/</p><!--책정가합계-->
+                <p style="display:inline">{{i.BO_DC_price}}</p><!--책할인가합계-->
+            {% endif %}
             <a href="{% url 'bookstore:couponselect' User.User_name i.id %}"> 쿠폰 사용하기</a></br>
         {% endfor %}</br>
         <p>---------------------------------------------------------</p>

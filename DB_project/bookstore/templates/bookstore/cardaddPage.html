@@ -7,10 +7,10 @@
 <body>
     <h3 style="display:inline">{{User_list.User_name}}님 카드 수정 페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:userinfo' User_list.User_name %}">정보수정</a>
-    <a href="{% url 'bookstore:home' User_list.User_name %}">홈으로</a></br></br>
+    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a></br></br>
     <p>카드 추가</p>
-    <form action="{% url 'bookstore:cardadd' User_list.User_name %}" method="post">
+    <form action="{% url 'bookstore:cardadd' User.User_name %}" method="post">
     {% csrf_token %}
         카드 이름 : <input type="text" value="{{Card_list.Card_name}}" name="card_name"></br>
         카드 번호 : <input type="text" value="{{Card_list.Card_num}}" name="card_num"></br>

@@ -83,3 +83,15 @@ class Coupon(models.Model): #쿠폰
 
     def __id__(self):
         return self.id
+
+
+class DongseoPay(models.Model): #동서페이
+    User = models.ForeignKey(User, on_delete=models.PROTECT)
+    DP_TradingDate = models.DateTimeField(default=now, blank=True)
+    DP_ChargePrice = models.IntegerField(default=0)
+    DP_UsedPrice = models.IntegerField(default=0)
+    DP_price = models.IntegerField(default=0)   #잔액
+    DP_history = models.IntegerField(default=0) #주문목록id넣기
+
+    def __id__(self):
+        return self.id

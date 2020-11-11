@@ -26,4 +26,6 @@ urlpatterns = [
     path('<str:name>/coupon/', views.couponPage, name='coupon'),    #회원수정->쿠폰
     path('<str:name>/<int:BookOrder_id>/couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰
     path('<str:name>/<int:BookOrder_id>/<int:coupon_id>/couponDC/', views.CouponDCpage, name='couponDC'),    #쿠폰 할인 값 넣기
+    ############################동서페이####################################
+    path('<str:name>/DPserch/', views.DPserchpage, name='DPserch'),    #동서페이 조회
 ]

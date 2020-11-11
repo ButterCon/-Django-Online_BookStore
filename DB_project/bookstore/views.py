@@ -10,6 +10,7 @@ from .models import Book
 from .models import BookSB
 from .models import BookOrder
 from .models import Coupon
+from .models import DongseoPay
 import datetime
 
 # Create your views here.
@@ -271,13 +272,13 @@ def userinfoPage(request, name):
         card_qs.save()
         qs_User = User.objects.get(User_name=name)
         qs_Book = Book.objects.all()
-        context = {'User_list': qs_User, 'Book_list': qs_Book}
+        context = {'User': qs_User, 'Book_list': qs_Book}
         return render(request, 'bookstore/homePage.html', context)
     else:
         User_qs = User.objects.get(User_name=name)
         SD_qs = ShippingDestination.objects.get(User=User_qs)
         Card_qs = Card.objects.get(User=User_qs)
-        context = {'User_list': User_qs, 'SD_list': SD_qs, 'Card_list': Card_qs}
+        context = {'User': User_qs, 'SD_list': SD_qs, 'Card_list': Card_qs}
         return render(request, 'bookstore/userinfoPage.html', context)
 
 
@@ -292,7 +293,7 @@ def sdaddPage(request, name):
 
     User_qs = User.objects.get(User_name=name)
     SD_qs = ShippingDestination.objects.filter(User=User_qs)
-    context = {'User_list': User_qs, 'SD_list': SD_qs}
+    context = {'User': User_qs, 'SD_list': SD_qs}
     return render(request, 'bookstore/sdaddPage.html', context)
 
 
@@ -309,3 +310,11 @@ def cardaddPage(request, name):
     Card_qs = Card.objects.filter(User=User_qs)
     context = {'User_list': User_qs, 'Card_list': Card_qs}
     return render(request, 'bookstore/cardaddPage.html', context)
+
+
+def DPserchpage(request, name):
+    User_qs = User.objects.get(User_name=name)
+    DP_qs = DongseoPay.objects.get(User=User_qs)
+
+    context = {"User": User_qs, "DP_list": DP_qs}
+    return render(request, 'bookstore/dpserchPage.html', context)

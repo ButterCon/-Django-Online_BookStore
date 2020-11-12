@@ -8,13 +8,13 @@
     <h3 style="display:inline">도서구매사이트</h3>
     <p style="display:inline">{{User.User_name}}님 어서오세요.</p>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
-    <a href="{% url 'bookstore:cart' User.User_name Order_id%}">장바구니</a></br></br></br>
+    <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
+    <a href="{% url 'bookstore:cart' %}">장바구니</a></br></br></br>
     {% for i in Book_list %}
         <p style="display:inline"><b>{{i.Book_name}}</b></p>
         <p style="display:inline">(재고량 : {{i.Book_stock}})</p>
-        <a href="{% url 'bookstore:cartadd' User.User_name i.id Order_id%}">장바구니추가</a>
-        <a href="{% url 'bookstore:sinorder' User.User_name i.id %}">바로구매</a></br>
+        <a href="{% url 'bookstore:cartadd' i.id %}">장바구니추가</a>
+        <a href="{% url 'bookstore:sinorder' i.id %}">바로구매</a></br>
     {% endfor %}
 </body>
 </html>

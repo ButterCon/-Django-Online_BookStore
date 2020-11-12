@@ -7,12 +7,7 @@
 <body>
     <h3 style="display:inline">회원가입</h3>
     <a href="{% url 'bookstore:login' %}">이전페이지</a>
-    {% if mes %}
-        <script>
-        alert("{{ mes }}")
-        </script>
-    {% endif %}
-    <form action="{% url 'bookstore:reg' %}" method="post">
+    <form action="{% url 'bookstore:regCon' %}" method="post">
     {% csrf_token %}
         이름 : <input type="text" name="name"></br>
         아이디 : <input type="text" name="id"></br>

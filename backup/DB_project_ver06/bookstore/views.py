@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.shortcuts import render
 from .models import User
@@ -14,53 +14,31 @@ from .models import DongseoPay
 import datetime
 
 # Create your views here.
-def regPage(request):
-    if request.method == "POST":    #값을 받을경우 실행
-        if request.POST['name'] != "" and request.POST['id'] != "" and request.POST['pw'] != "" and request.POST['re_pw'] != "" and request.POST['sd_num'] != "" and request.POST['sd_ba'] != "" and request.POST['sd_da'] != "" and request.POST['card_name'] != "" and request.POST['card_num'] != "" and request.POST['card_date'] != "":
-            if request.POST['pw'] == request.POST['re_pw']: #비밀번호가 같을경우
-                User_qs = User(User_id=request.POST['id'], User_pw=request.POST['pw'], User_name=request.POST['name'])
-                User_qs.save()
-                ShippingDestination(User=User_qs, SD_num=request.POST['sd_num'], SD_ba=request.POST['sd_ba'], SD_da=request.POST['sd_da']).save()
-                Card(User=User_qs, Card_name=request.POST['card_name'], Card_num=request.POST['card_num'], Card_date=request.POST['card_date']).save()
-                return HttpResponseRedirect(reverse('bookstore:login'))
-            else:
-                context = {"mes": "아이디 혹은 비밀번호가 일치하지 않습니다."}
-                return render(request, "bookstore/regPage.html", context)
-        else:
-            context = {"mes": "빈칸이 있습니다."}
-            return render(request, "bookstore/regPage.html", context)
-    else:
-        return render(request, 'bookstore/regPage.html')
-
-
-def login(request):
+def loginPage(request):
     if request.method == "POST":
+        id_temp = request.POST['id']
+        pw_temp = request.POST['pw']
         try:
-            if request.POST['id'] != "" and request.POST['pw'] != "":
-                if request.POST['id'] == User.objects.get(User_id=request.POST['id']) and request.POST['pw'] == User.objects.get(User_pw=request.POST['pw']):
-                    print(User.objects.get(User_id=request.POST['id'])+" 로그인 성공")
-
-                    request.session['User_id'] = User.objects.get(User_id=request.POST['id']).id
-                    request.session['mes_bool'] = 0
-
-                    return HttpResponseRedirect(reverse("bookstore:home"))
+            User_qs = User.objects.get(User_id=id_temp)
+            if id_temp == User_qs.User_id and pw_temp == User_qs.User_pw:
+                print("계정 일치")
+                context = {'User': User_qs}
+                return render(request, 'bookstore/loginPage.html', context)
             else:
-                return render(request, "bookstore/loginPage.html", {"mes": "빈칸이 있습니다."})
+                print("계정 불일치 try")
+            return HttpResponse('계정 불일치')
         except:
-            print(request)
-            return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
-    if request.method == "GET":
+            return HttpResponse('아이디 혹은 비밀번호가 존재하지 않습니다.')
+    else:
         return render(request, 'bookstore/loginPage.html')
 
 
-def homePage(request):
-    se_User_id = request.session['User_id']
-    User_qs = User.objects.get(id=se_User_id)
+def homePage(request, name):
+    User_qs = User.objects.get(User_name=name)
     Book_qs = Book.objects.all()
     #Order 생성                   !!!!!!꼭 cart들어갔다 나가면 삭제해야됨 !!!!!!!!
     Order_qs = Order(User=User_qs)
     Order_qs.save()
-    request.session['Order_id'] = Order_qs.id
     context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
     return render(request, 'bookstore/homePage.html', context)
 
@@ -231,6 +209,45 @@ def couponPage(request, name):
     context = {'User': User_qs, 'CP_list': CP_qs}
 
     return render(request, 'bookstore/couponPage.html', context)
+
+
+def regPage(request):
+    return render(request, 'bookstore/regPage.html')
+
+
+def regConPage(request):
+    #받아야되는데이터 User, Card, 주소, 장바구니(자동으로 데이터 추가)
+    name = request.POST['name']
+    id = request.POST['id']
+    pw = request.POST['pw']
+    re_pw = request.POST['re_pw']
+    SD_num = request.POST['sd_num'] #우편번호
+    SD_ba = request.POST['sd_ba'] #기본주소
+    SD_da = request.POST['sd_da'] #상세주소
+    card_name = request.POST['card_name']
+    card_num = request.POST['card_num']
+    card_date = request.POST['card_date']
+    #장바구니,카드,배송지에 User추가하기
+
+    if name != "" and id != "" and pw != "" and re_pw != "":
+        if pw == re_pw:
+            #유저 저장
+            user_qs = User(User_name=name, User_id=id, User_pw=pw)
+            user_qs.save()
+            #유저배송지 저장
+            sd_qs = ShippingDestination(User=User.objects.get(User_name=name), SD_num=SD_num, SD_ba=SD_ba, SD_da=SD_da)
+            sd_qs.save()
+            #유저카드 저장
+            card_qs = Card(User=User.objects.get(User_name=name), Card_name=card_name, Card_num=card_num, Card_date=card_date)
+            card_qs.save()
+            #유저 장바구니 저장
+            sb_qs = ShoppingBasket(User=User.objects.get(User_name=name))
+            sb_qs.save()
+            return HttpResponseRedirect(reverse('bookstore:login'))
+        else:
+            return HttpResponse('비밀번호가 일치하지 않습니다.')
+    else:
+        return HttpResponse("빈칸이 있습니다.")
 
 
 def userinfoPage(request, name):

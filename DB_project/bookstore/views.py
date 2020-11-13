@@ -18,7 +18,6 @@ def test1(request):
     request.session['User'] = '진현우'
     return render(request, "bookstore/test1.html")
 
-
 def test2(request):
     User_name = request.session['User']
     context = {"User": User_name}
@@ -63,36 +62,83 @@ def login(request):
         return render(request, 'bookstore/loginPage.html')
 
 
+def logout(request):
+    try:
+        del request.session['User_id']
+    except KeyError:
+        pass
+    return render(request, "bookstore/loginPage.html", {"mes": "로그아웃 되었습니다."})
+
+
 def homePage(request, User_id):
+    #장바구니 지워주기
+    try:
+        del request.session['Order_id']
+        Order_qs = Order.objects.filter(User=get_object_or_404(User, id=User_id)).last()
+        BookSB_qs = BookSB.objects.filter(ShoppingBasket=get_object_or_404(ShoppingBasket, User=get_object_or_404(User, id=request.session['User_id'])), BookSB_type=0).last()
+        print(BookSB_qs.Book.Book_stock)
+        BookSB_qs.Book.Book_stock += 1
+        print(BookSB_qs.Book.Book_stock)
+        for i in BookSB_qs:
+            BookSB_qs.save() # 줄어든 수량 복구
+        if Order_qs is not None and Order_qs.Order_con == 0:
+            Order_qs.delete()
+        if BookSB_qs is not None:
+            BookSB_qs.delete() #사용자의 즉시구매 장바구니를 삭제한다.
+    except KeyError:
+        pass
+    except:
+        pass
     User_qs = get_object_or_404(User, id=User_id)
     Book_qs = Book.objects.all()
     Order_qs = Order(User=User_qs)
     Order_qs.save()
 
     #세션 전달
-    request.session['Order_id'] = Order_qs.id
-    context = {'User': User_qs, 'Book_list': Book_qs, 'Order_id': Order_qs.id}  #주문 id 저장하기
+    request.session["Order_id"] = Order_qs.id
+
+    context = {'User': User_qs,
+               'Book_list': Book_qs}
     return render(request, 'bookstore/homePage.html', context)
 
 
-def cartPage(request, name, Order_id):
-    User_qs = get_object_or_404(User, User_name=name)
+def cartPage(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
     #총가격
-    total = 0
+    Book_total_price = 0
     for i in BookSB_qs:
-        total += i.Book.Book_price
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs, 'Order_id': Order_id, 'Book_total_price': total}
+        Book_total_price += i.Book.Book_price
+    context = {'User': User_qs,
+               'BookSB_list': BookSB_qs,
+               'Book_total_price': Book_total_price}
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def cartaddPage(request, name, book_id, Order_id):
+def sincartaddPage(request, book_id):
     # 홈에서 장바구니 클릭시 이벤트
     # 책 재고량 -1
     # 책 재고량 수정하고 나머지는 orderCon이라 같음
     # User 장바구니에 Book 추가됨
-    User_qs = get_object_or_404(User, User_name=name)
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
+    Book_qs = get_object_or_404(Book, id=book_id)
+    SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
+    #책 stock -1 해주기
+    Book_qs.Book_stock += -1
+    Book_qs.save()
+    #장바구니에 책 넣기
+    BookSB(Book=Book_qs, ShoppingBasket=SB_qs, BookSB_type=0).save()
+
+    return HttpResponseRedirect(reverse("bookstore:order"))
+
+
+def mulcartaddPage(request, book_id):
+    # 홈에서 장바구니 클릭시 이벤트
+    # 책 재고량 -1
+    # 책 재고량 수정하고 나머지는 orderCon이라 같음
+    # User 장바구니에 Book 추가됨
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
     Book_qs = get_object_or_404(Book, id=book_id)
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     #책 stock -1 해주기
@@ -102,18 +148,21 @@ def cartaddPage(request, name, book_id, Order_id):
     BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #장바구니 가져오기
     #총가격
-    total = 0
+    Book_total_price = 0
     for i in BookSB_qs:
-        total += i.Book.Book_price
-    context = {'User': User_qs, 'BookSB_list': BookSB_qs, 'Book_total_price': total, 'Order_id': Order_id}
+        Book_total_price += i.Book.Book_price
+
+    context = {'User': User_qs,
+               'BookSB_list': BookSB_qs,
+               'Book_total_price': Book_total_price}
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def cartdelPage(request, name, book_id, Order_id):
+def cartdelPage(request, book_id):
     #장바구니 페이지에서 장바구니 지우기 클릭시 이벤트
     #책 재고량 +1
     #User 장바구니에 Book 제거
-    User_qs = get_object_or_404(User, User_name=name)
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
     Book_qs = get_object_or_404(Book, id=book_id)  #지워야하는 책 쿼리 가져옴
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     # 책 stock +1 해주기
@@ -127,51 +176,54 @@ def cartdelPage(request, name, book_id, Order_id):
     total = 0
     for i in BookSB_qs:
         total += i.Book.Book_price
-    context = {'User': User_qs, "BookSB_list": BookSB_qs, 'Book_total_price': total, 'Order_id': Order_id}
+    context = {'User': User_qs,
+               "BookSB_list": BookSB_qs,
+               'Book_total_price': total}
     return render(request, 'bookstore/cartPage.html', context)
 
 
-def orderPage(request, name, Order_id):
-    User_qs = get_object_or_404(User, User_name=name)
+def orderPage(request):
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
     Card_qs = Card.objects.filter(User=User_qs).first()
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
-    BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs)
-    Order_qs = get_object_or_404(Order, id=Order_id)
+    Order_qs = get_object_or_404(Order, id=request.session['Order_id'])
+
+    try:    #해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
+        BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
+    except:
+        BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=1)
+
     total_price = 0 #총 금액
+
+    #처음 장바구니리스트를 주문에 넣어줌
     for i in BookSB_qs:
         total_price += i.Book.Book_price  #모든 책 가격 더하기
-        Order_qs.save()
-        print(Order_qs.Order_totalprice)
         qs = BookOrder(Book=i.Book, Order=Order_qs, BO_count=1, BO_price=i.Book.Book_price)
         qs.save()
+
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
     for i in BookOrder_qs:
         for j in BookOrder_qs:
-            if i.id != j.id:
-                if i.Book.id == j.Book.id:
-                    j.delete()
-                    i.BO_count += 1
-                    i.BO_price += i.Book.Book_price
-                    i.save()
+            if i.id != j.id:    #같은 주문리스트면 패스
+                if i.Book.id == j.Book.id:  #같은 책일경우
+                    j.delete()  #중복되는 책 하나 제거
+                    i.BO_count += 1 #책 개수 +1
+                    i.BO_price += i.Book.Book_price #책 값 한번더 더해줌
+                    i.save()    #저장
+
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
-    context = {"User": User_qs, "BookOrder_list": BookOrder_qs,"Order_date": str(datetime.datetime.now()), "total_price": total_price, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
-    return render(request, 'bookstore/orderPage.html', context)
 
-
-def sinorderPage(request, name, Book_id):
-    User_qs = get_object_or_404(User, User_name=name)
-    Book_qs = get_object_or_404(Book, id=Book_id)
-    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
-    Card_qs = Card.objects.filter(User=User_qs).first()
-    Order_id = Order.objects.filter(User=User_qs).last().id #홈의 오더 id
-    Order_qs = Order(User=User_qs, Order_date=datetime.datetime.now(), Order_totalprice=Book_qs.Book_price)
+    Order_qs.Order_date = datetime.datetime.now()
+    Order_qs.Order_totalprice = total_price
     Order_qs.save()
-    BookOrder_qs = BookOrder(Book=Book_qs, Order=Order_qs, BO_count=1, BO_price=Book_qs.Book_price)
-    BookOrder_qs.save()
-    BookOrder_qs = BookOrder.objects.get(Order=Order_qs)
 
-    context = {'User': User_qs, 'sinBookOrder_list': BookOrder_qs, 'Order_id': Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+    context = {"User": User_qs,
+               "BookOrder_list": BookOrder_qs,
+               "Order_list": Order_qs,
+               'SD_list': SD_qs,
+               'Card_list': Card_qs}
+
     return render(request, 'bookstore/orderPage.html', context)
 
 
@@ -182,7 +234,13 @@ def CPorderPage(request, name, Order_id):
     Card_qs = Card.objects.filter(User=User_qs).first()
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
 
-    context = {"User": User_qs, "BookOrder_list": BookOrder_qs, "Order_date": str(datetime.datetime.now()), "total_price": Order_qs.Order_totalprice, "Order_id": Order_id, 'SD_list': SD_qs, 'Card_list': Card_qs}
+    context = {"User": User_qs,
+               "BookOrder_list": BookOrder_qs,
+               "Order_date": str(datetime.datetime.now()),
+               "total_price": Order_qs.Order_totalprice,
+               "Order_id": Order_id,
+               'SD_list': SD_qs,
+               'Card_list': Card_qs}
     return render(request, 'bookstore/orderPage.html', context)
 
 
@@ -201,7 +259,10 @@ def couponselectPage(request, name, BookOrder_id):
     User_qs = get_object_or_404(User, User_name=name)
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = Coupon.objects.filter(User=User_qs)
-    context = {"User": User_qs, 'BookOrder_list': BookOrder_qs, 'CP_list': CP_qs, 'Order_id': BookOrder_qs.Order.id}
+    context = {"User": User_qs,
+               'BookOrder_list': BookOrder_qs,
+               'CP_list': CP_qs,
+               'Order_id': BookOrder_qs.Order.id}
     return render(request, 'bookstore/couponselectPage.html', context)
 
 
@@ -231,14 +292,18 @@ def CouponDCpage(request, name, BookOrder_id, coupon_id):
 
     CP_qs = Coupon.objects.filter(User=User_qs)
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
-    context = {"User": User_qs, 'DC_BookOrder_list': BookOrder_qs, 'CP_list': CP_qs, 'Order_id': BookOrder_qs.Order.id}
+    context = {"User": User_qs,
+               'DC_BookOrder_list': BookOrder_qs,
+               'CP_list': CP_qs,
+               'Order_id': BookOrder_qs.Order.id}
     return render(request, 'bookstore/couponselectPage.html', context)
 
 
 def couponPage(request, name):
     User_qs = get_object_or_404(User, User_name=name)
     CP_qs = Coupon.objects.filter(User=User_qs)
-    context = {'User': User_qs, 'CP_list': CP_qs}
+    context = {'User': User_qs,
+               'CP_list': CP_qs}
 
     return render(request, 'bookstore/couponPage.html', context)
 
@@ -265,13 +330,16 @@ def userinfoPage(request, name):
         card_qs.save()
         User_qs = get_object_or_404(User, User_name=name)
         Book_qs = Book.objects.all()
-        context = {'User': User_qs, 'Book_list': Book_qs}
+        context = {'User': User_qs,
+                   'Book_list': Book_qs}
         return render(request, 'bookstore/homePage.html', context)
     else:
         User_qs = get_object_or_404(User, User_name=name)
         SD_qs = get_object_or_404(ShippingDestination, User=User_qs)
         Card_qs = get_object_or_404(Card, User=User_qs)
-        context = {'User': User_qs, 'SD_list': SD_qs, 'Card_list': Card_qs}
+        context = {'User': User_qs,
+                   'SD_list': SD_qs,
+                   'Card_list': Card_qs}
         return render(request, 'bookstore/userinfoPage.html', context)
 
 
@@ -286,7 +354,8 @@ def sdaddPage(request, name):
 
     User_qs = get_object_or_404(User, User_name=name)
     SD_qs = ShippingDestination.objects.filter(User=User_qs)
-    context = {'User': User_qs, 'SD_list': SD_qs}
+    context = {'User': User_qs,
+               'SD_list': SD_qs}
     return render(request, 'bookstore/sdaddPage.html', context)
 
 
@@ -301,7 +370,8 @@ def cardaddPage(request, name):
 
     User_qs = get_object_or_404(User, User_name=name)
     Card_qs = Card.objects.filter(User=User_qs)
-    context = {'User': User_qs, 'Card_list': Card_qs}
+    context = {'User': User_qs,
+               'Card_list': Card_qs}
     return render(request, 'bookstore/cardaddPage.html', context)
 
 
@@ -309,5 +379,6 @@ def DPserchpage(request, name):
     User_qs = get_object_or_404(User, User_name=name)
     DP_qs = get_object_or_404(DongseoPay, User=User_qs)
 
-    context = {"User": User_qs, "DP_list": DP_qs}
+    context = {"User": User_qs,
+               "DP_list": DP_qs}
     return render(request, 'bookstore/dpserchPage.html', context)

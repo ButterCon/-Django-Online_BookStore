@@ -26,8 +26,8 @@ urlpatterns = [
     path('cardadd/', views.cardaddPage, name='cardadd'),
     ############################쿠폰####################################
     path('coupon/', views.couponPage, name='coupon'),    #회원수정->쿠폰
-    path('couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰
-    path('couponDC/', views.CouponDCpage, name='couponDC'),    #쿠폰 할인 값 넣기
+    path('<int:BookOrder_id>/couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰
+    path('<int:BookOrder_id>/<int:CP_id>/couponDC/', views.CouponDCpage, name='couponDC'),    #쿠폰 할인 값 넣기
     ############################동서페이####################################
     path('DPserch/', views.DPserchpage, name='DPserch'),    #동서페이 조회
 ]

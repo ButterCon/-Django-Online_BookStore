@@ -7,8 +7,8 @@
 <body>
     <h3 style="display:inline">{{User.User_name}}님 쿠폰페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a>
-    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
+    <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
     {% for i in CP_list %}
         <p>{{i.CP_kind}}</p>
     {% endfor%}

@@ -5,12 +5,17 @@
     <title>SDaddPage</title>
 </head>
 <body>
+    {% if mes %}
+        <script>
+            {{mes}}
+        </script>
+    {% endif %}
     <h3 style="display:inline">{{User.User_name}}님 주소수정 페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:userinfo' User.User_name %}">정보수정</a>
-    <a href="{% url 'bookstore:home' User.User_name %}">홈으로</a></br></br>
+    <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
+    <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br>
     <p>주소 추가</p>
-    <form action="{% url 'bookstore:sdadd' User.User_name %}" method="post">
+    <form action="{% url 'bookstore:sdadd' %}" method="post">
     {% csrf_token %}
         우편번호 : <input type="text" value="{{SD_list.SD_num}}" name="sd_num"></br>
         기본주소 : <input type="text" value="{{SD_list.SD_ba}}" name="sd_ba"></br>

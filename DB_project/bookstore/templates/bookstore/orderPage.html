@@ -20,7 +20,12 @@
         <p style="display:inline">{{i.BO_count}} /</p><!--책수량-->
         <p style="display:inline">{{i.BO_price}} /</p><!--책할인가합계-->
         <p style="display:inline">{{i.BO_DC_price}} /</p><!--책할인가-->
-        <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a></br>
+        {% if i.CP_kind == "" %}
+            <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a></br>
+        {% else %}
+            <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a>
+            <p style="display:inline">({{i.CP_kind}}) /</p><!--책할인가--></br>
+        {% endif %}
     {% endfor %}</br>
     <p>---------------------------------------------------------</p>
     <p>총 상품금액 : {{Order_list.Order_DC_totalprice}}</p>

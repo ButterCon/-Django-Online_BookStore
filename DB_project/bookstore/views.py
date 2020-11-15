@@ -181,6 +181,22 @@ def cartdelPage(request, book_id):
 
 
 def orderPage(request):
+    if len(BookOrder.objects.filter(Order=get_object_or_404(Order, id=request.session["Order_id"]))) != 0:
+        #이미 BookOrder쿼리가 존재할 경우, 기존 데이터 뿌려준다.
+        User_qs = get_object_or_404(User, id=request.session['User_id'])
+        Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+        BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
+        Card_qs = Card.objects.filter(User=User_qs).first()
+        SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
+
+        context = {"User": User_qs,
+                   "Order_list": Order_qs,
+                   "BookOrder_list": BookOrder_qs,
+                   'SD_list': SD_qs,
+                   'Card_list': Card_qs}
+
+        return render(request, 'bookstore/orderPage.html', context)
+
     User_qs = get_object_or_404(User, id=request.session['User_id'])
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
     Card_qs = Card.objects.filter(User=User_qs).first()
@@ -282,6 +298,7 @@ def couponselectPage(request, BookOrder_id):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)    #할인적용할 주문책리스트
     CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0)
+
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
                'CP_list': CP_qs}
@@ -293,6 +310,9 @@ def CouponDCpage(request, BookOrder_id, CP_id):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = get_object_or_404(Coupon, id=CP_id)
+    # CP_qs.Used = 1  #선택된 쿠폰 사용처리
+    # CP_qs.save()
+    # request.session["Used_CP_id"] = CP_id   #사용된 쿠폰 아이디 넘겨준다
 
     # 쿠폰 이름 넣어주기
     BookOrder_qs.CP_kind = CP_qs.CP_kind
@@ -315,9 +335,11 @@ def CouponDCpage(request, BookOrder_id, CP_id):
             Order_qs.Order_DC_totalprice += i.BO_price
     Order_qs.save()
 
+    # CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0).exclude(id=CP_id)
     CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0)
+
     context = {"User": User_qs,
-               'DC_BookOrder_list': BookOrder_qs,
+               'BookOrder_list': BookOrder_qs,
                'CP_list': CP_qs}
     return render(request, 'bookstore/couponselectPage.html', context)
 

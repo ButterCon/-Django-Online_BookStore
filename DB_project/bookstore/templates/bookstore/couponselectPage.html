@@ -10,19 +10,12 @@
     <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
     <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br></br></br>
     <a href="{% url 'bookstore:CPorder' %}">주문내역으로 돌아가기</a></br></br>
-    {% if BookOrder_list %}
-        {% for i in CP_list %}
+    {% for i in CP_list %}
+        {% if i.CP_kind == BookOrder_list.CP_kind %}
+            {{i.CP_kind}} (선택됨)</br></br>
+        {% else %}
             <a href="{% url 'bookstore:couponDC' BookOrder_list.id i.id %}">{{i.CP_kind}}</a></br></br>
-        {% endfor%}
-    {% endif %}
-    {% if DC_BookOrder_list %}
-        {% for i in CP_list %}
-            {% if i.CP_kind == DC_BookOrder_list.CP_kind %}
-                {{i.CP_kind}} (선택됨)</br></br>
-            {% else %}
-                <a href="{% url 'bookstore:couponDC' DC_BookOrder_list.id i.id %}">{{i.CP_kind}}</a></br></br>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
+        {% endif %}
+    {% endfor %}
 </body>
 </html>

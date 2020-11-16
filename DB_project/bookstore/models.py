@@ -81,7 +81,8 @@ class BookOrder(models.Model):      #책 주문내역리스트
 class Coupon(models.Model): #쿠폰
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     CP_kind = models.CharField(max_length=100)
-    CP_Used = models.BooleanField(default=0)    #1일경우 사용
+    # 0)미사용, 1)사용대기, 2)사용완료
+    CP_state = models.IntegerField(default=0)
     CP_date = models.DateTimeField()    #사용 날짜
     CP_validity = models.CharField(max_length=100)  #유효기간
 

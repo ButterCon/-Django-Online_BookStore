@@ -11,8 +11,9 @@
     <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br></br></br>
     <a href="{% url 'bookstore:CPorder' %}">주문내역으로 돌아가기</a></br></br>
     {% for i in CP_list %}
-        {% if i.CP_kind == BookOrder_list.CP_kind %}
+        {% if i.CP_state == 1 %}    <!--사용진행중인 쿠폰 -->
             {{i.CP_kind}} (선택됨)</br></br>
+            <a style="display:inline" href="{% url 'bookstore:cpselcancancel' BookOrder_list.id i.id %}">선택취소</a>
         {% else %}
             <a href="{% url 'bookstore:couponDC' BookOrder_list.id i.id %}">{{i.CP_kind}}</a></br></br>
         {% endif %}

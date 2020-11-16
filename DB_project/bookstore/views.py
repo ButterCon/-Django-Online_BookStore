@@ -80,6 +80,7 @@ def homePage(request, User_id):
         pass
     Order_qs = Order.objects.filter(User=User_qs, Order_con=0)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
+    CP_qs = Coupon.objects.filter(User=User_qs, CP_state=1) #사용대기쿠폰가져옴
     if BookSB_qs is not None:
         for i in BookSB_qs:
             i.Book.Book_stock += 1
@@ -88,6 +89,10 @@ def homePage(request, User_id):
     if Order_qs is not None:
         for i in Order_qs:
             i.delete()
+    if CP_qs is not None:
+        for i in CP_qs:
+            i.CP_state = 0  #사용대기 -> 미사용
+            i.save()
     Book_qs = Book.objects.all()
 
     #세션 전달
@@ -279,12 +284,12 @@ def orderdonePage(request):
 
     for i in BookSB_qs:
         i.delete()
-    #사용된 쿠폰 CP_Used = 1로 바꿔주기
+    #사용된 쿠폰 CP_state = 2로 바꿔주기
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
     for i in BookOrder_qs:
         if i.CP_kind != "":
             CP_qs = get_object_or_404(Coupon, CP_kind=i.CP_kind)
-            CP_qs.CP_Used = 1
+            CP_qs.CP_state = 2
             CP_qs.save()
     #Order_con = 1로 바꿔주기, 세션에서 삭제
     Order_qs.Order_con = 1
@@ -297,7 +302,7 @@ def orderdonePage(request):
 def couponselectPage(request, BookOrder_id):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)    #할인적용할 주문책리스트
-    CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0)
+    CP_qs = Coupon.objects.filter(User=User_qs).exclude(CP_state=2)
 
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
@@ -310,9 +315,8 @@ def CouponDCpage(request, BookOrder_id, CP_id):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = get_object_or_404(Coupon, id=CP_id)
-    # CP_qs.Used = 1  #선택된 쿠폰 사용처리
-    # CP_qs.save()
-    # request.session["Used_CP_id"] = CP_id   #사용된 쿠폰 아이디 넘겨준다
+    CP_qs.CP_state = 1  #선택된 쿠폰 사용처리
+    CP_qs.save()
 
     # 쿠폰 이름 넣어주기
     BookOrder_qs.CP_kind = CP_qs.CP_kind
@@ -335,8 +339,8 @@ def CouponDCpage(request, BookOrder_id, CP_id):
             Order_qs.Order_DC_totalprice += i.BO_price
     Order_qs.save()
 
-    # CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0).exclude(id=CP_id)
-    CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0)
+    #사용한쿠폰 제외하고 가져옴
+    CP_qs = Coupon.objects.filter(User=User_qs).exclude(CP_state=2)
 
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
@@ -346,7 +350,7 @@ def CouponDCpage(request, BookOrder_id, CP_id):
 
 def couponPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
-    CP_qs = Coupon.objects.filter(User=User_qs, CP_Used=0)  #사용안한 쿠폰 가져온다
+    CP_qs = Coupon.objects.filter(User=User_qs, CP_state=0)  #사용안한 쿠폰 가져온다
     context = {'User': User_qs,
                'CP_list': CP_qs}
 

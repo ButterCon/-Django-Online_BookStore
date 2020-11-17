@@ -18,10 +18,12 @@ def test1(request):
     request.session['User'] = '진현우'
     return render(request, "bookstore/test1.html")
 
+
 def test2(request):
     User_name = request.session['User']
     context = {"User": User_name}
     return render(request, "bookstore/test2.html", context)
+
 
 def regPage(request):
     if request.method == "POST":    #값을 받을경우 실행
@@ -186,6 +188,8 @@ def cartdelPage(request, book_id):
 
 
 def orderPage(request):
+    #작동방식
+    #BookOrder.CP_kind = ""일경우 쿠폰 가격 출력안함
     if len(BookOrder.objects.filter(Order=get_object_or_404(Order, id=request.session["Order_id"]))) != 0:
         #이미 BookOrder쿼리가 존재할 경우, 기존 데이터 뿌려준다.
         User_qs = get_object_or_404(User, id=request.session['User_id'])
@@ -239,7 +243,7 @@ def orderPage(request):
 
     Order_qs.Order_date = datetime.datetime.now()
     Order_qs.Order_totalprice = total_price
-    Order_qs.Order_DC_totalprice = Order_qs.Order_totalprice
+    #Order_qs.Order_DC_totalprice = Order_qs.Order_totalprice
     Order_qs.save()
 
 
@@ -347,6 +351,34 @@ def CouponDCpage(request, BookOrder_id, CP_id):
                'CP_list': CP_qs}
     return render(request, 'bookstore/couponselectPage.html', context)
 
+
+def cpcancelPage(request, BookOrder_id, CP_id):
+    #작동방식 / 쿠폰 취소하는 경우
+    # Coupon.CP_state = 0
+    # BookOrder.BO_DC_price = BookOrder.BO_price
+    # BookOrder.CP_kind = "" , 초기화해주기
+    # Order.Order_DC_totalprice 초기화
+
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+    BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
+    CP_qs = get_object_or_404(Coupon, id=CP_id)
+    CP_qs.CP_state = 0
+    CP_qs.save()
+
+    BookOrder_qs.BO_DC_price = 0
+    BookOrder_qs.CP_kind = ""
+    BookOrder_qs.save()
+
+    Order_qs.Order_DC_totalprice = 0
+    Order_qs.save()
+
+    CP_qs = Coupon.objects.filter(User=User_qs).exclude(CP_state=2)
+
+    context = {"User": User_qs,
+               'BookOrder_list': BookOrder_qs,
+               'CP_list': CP_qs}
+    return render(request, 'bookstore/couponselectPage.html', context)
 
 def couponPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])

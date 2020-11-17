@@ -28,7 +28,11 @@
         {% endif %}
     {% endfor %}</br>
     <p>---------------------------------------------------------</p>
-    <p>총 상품금액 : {{Order_list.Order_DC_totalprice}}</p>
+    {% if Order_list.Order_DC_totalprice == 0 %}
+        <p>총 상품금액 : {{Order_list.Order_totalprice}}</p>
+    {% else %}
+        <p>총 상품금액 : {{Order_list.Order_DC_totalprice}}</p>
+    {% endif %}
     <p>---------------------------------------------------------</p>
     <p>주문일자 : {{Order_list.Order_date}}</p>
     <p>신용카드 종류 : {{Card_list.Card_name}}</p>

@@ -13,3 +13,23 @@ ShoppingBasket, BookSB
 마지막 주문할 때 넣어주는건 어떤가
 
 책 장바구니에 추가하고 저장하기
+
+#쿠폰 사용 방법
+쿠폰 사용은 주문화면에서 사용가능하다.
+주문 내역에서 쿠폰을 선택할 수 있다.
+쿠폰 선택으로 들어갈 경우 유저가 사용하지 않은 쿠폰 리스트가 출력된다.
+쿠폰 리스트 중 쿠폰 하나를 선택하면 책 가격에서 할인된다.
+딴 쿠폰을 선택할 경우 가격할인이 초기화되고 선택된 할인이 적용된다.
+
+쿠폰 바꾸는 과정
+if BookOrder.CP_kind != "":
+	기존에 BookOrder.CP_kind의 쿠폰에 해당되는 Coupon의 CP_state를 0으로 바꿔준다.
+CouponDCPage에서 Order_DC_total, BO_DC_price을 0으로 만들어준다
+
+#쿠폰 취소 방법
+선택된 쿠폰 id와 BookOrder_id를 받는다.
+만약 취소하려는 쿠폰과 BookOrder의 쿠폰이 다를경우 다른 쿠폰 메시지를 띄워주고 다시
+다시 선택화면으로 넘어간다.
+if BookOrder.CP_kind != Coupon.CP_kind:
+    context {"mes":"사용중인 쿠폰입니다."}
+    return render(request, url, context)

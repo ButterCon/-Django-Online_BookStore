@@ -5,6 +5,11 @@
     <title>CouponSelectPage</title>
 </head>
 <body>
+    {% if mes %}
+        <script>
+            alert("{{ mes }}")
+        </script>
+    {% endif %}
     <h3 style="display:inline">{{User.User_name }}님 쿠폰사용페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
     <a href="{% url 'bookstore:userinfo' %}">정보수정</a>

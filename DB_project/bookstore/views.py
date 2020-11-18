@@ -319,6 +319,12 @@ def CouponDCpage(request, BookOrder_id, CP_id):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = get_object_or_404(Coupon, id=CP_id)
+
+    if BookOrder_qs.CP_kind != "":  #현재 주문항목에 쿠폰이 적용된 경우 쿠폰을 초기화 해준다.
+        qs = get_object_or_404(Coupon, CP_kind=BookOrder_qs.CP_kind)
+        qs.CP_state = 0     #쿠폰 상태를 0으로 바꿔준다.
+        qs.save()
+
     CP_qs.CP_state = 1  #선택된 쿠폰 사용처리
     CP_qs.save()
 
@@ -358,11 +364,17 @@ def cpcancelPage(request, BookOrder_id, CP_id):
     # BookOrder.BO_DC_price = BookOrder.BO_price
     # BookOrder.CP_kind = "" , 초기화해주기
     # Order.Order_DC_totalprice 초기화
-
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = get_object_or_404(Coupon, id=CP_id)
+    if BookOrder_qs.CP_kind != CP_qs.CP_kind:
+        CP_qs = Coupon.objects.filter(User=User_qs).exclude(CP_state=2)
+        context = {"User": User_qs,
+                   'BookOrder_list': BookOrder_qs,
+                   'CP_list': CP_qs,
+                   'mes': "다른책에 사용중인 쿠폰입니다."}
+        return render(request, 'bookstore/couponselectPage.html', context)
     CP_qs.CP_state = 0
     CP_qs.save()
 

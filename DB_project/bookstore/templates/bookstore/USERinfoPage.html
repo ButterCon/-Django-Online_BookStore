@@ -5,11 +5,16 @@
     <title>userinfoPage</title>
 </head>
 <body>
+    {% if mes %}
+        <script>
+            alert("{{ mes }}")
+        </script>
+    {% endif %}
     <h3 style="display:inline">{{User.User_name}}님 회원수정</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
     <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
     <a href="{% url 'bookstore:coupon' %}">내쿠폰 보기</a>
-    <a href="{% url 'bookstore:DPserch' %}">동서페이 보기</a></br></br></br>
+    <a href="{% url 'bookstore:DP' %}">동서페이 보기</a></br></br></br>
     <form action="{% url 'bookstore:userinfo' %}" method="post">
     {% csrf_token %}
         이름 : <input type="text" value="{{User.User_name}}" name="name"></br>

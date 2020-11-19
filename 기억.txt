@@ -33,3 +33,14 @@ CouponDCPage에서 Order_DC_total, BO_DC_price을 0으로 만들어준다
 if BookOrder.CP_kind != Coupon.CP_kind:
     context {"mes":"사용중인 쿠폰입니다."}
     return render(request, url, context)
+
+#DongseoPay사용방법
+내정보 -> 동서페이에클릭시
+    if 동서페이 발급 안된경우:
+        if 발급을 희망할 경우:
+            DP_issue에서 발급진행
+        else: #발급을 희망 안할경우
+            userinfo.hmtl로 돌아간다.
+            mes = "발급을 취소하였습니다."
+    else: #동서페이 발급된 경우
+

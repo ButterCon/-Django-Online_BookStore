@@ -36,12 +36,12 @@ def regPage(request):
                 return HttpResponseRedirect(reverse('bookstore:login'))
             else:
                 context = {"mes": "아이디 혹은 비밀번호가 일치하지 않습니다."}
-                return render(request, "bookstore/regPage.html", context)
+                return render(request, "bookstore/REGPage.html", context)
         else:
             context = {"mes": "빈칸이 있습니다."}
-            return render(request, "bookstore/regPage.html", context)
+            return render(request, "bookstore/REGPage.html", context)
     else:
-        return render(request, 'bookstore/regPage.html')
+        return render(request, 'bookstore/REGPage.html')
 
 
 def login(request):
@@ -118,7 +118,7 @@ def cartPage(request):
     context = {'User': User_qs,
                'BookSB_list': BookSB_qs,
                'Book_total_price': Book_total_price}
-    return render(request, 'bookstore/cartPage.html', context)
+    return render(request, 'bookstore/CARTPage.html', context)
 
 
 def sincartaddPage(request, book_id):
@@ -160,7 +160,7 @@ def mulcartaddPage(request, book_id):
     context = {'User': User_qs,
                'BookSB_list': BookSB_qs,
                'Book_total_price': Book_total_price}
-    return render(request, 'bookstore/cartPage.html', context)
+    return render(request, 'bookstore/CARTPage.html', context)
 
 
 def cartdelPage(request, book_id):
@@ -184,7 +184,7 @@ def cartdelPage(request, book_id):
     context = {'User': User_qs,
                "BookSB_list": BookSB_qs,
                'Book_total_price': total}
-    return render(request, 'bookstore/cartPage.html', context)
+    return render(request, 'bookstore/CARTPage.html', context)
 
 
 def orderPage(request):
@@ -204,7 +204,7 @@ def orderPage(request):
                    'SD_list': SD_qs,
                    'Card_list': Card_qs}
 
-        return render(request, 'bookstore/orderPage.html', context)
+        return render(request, 'bookstore/ORDERPage.html', context)
 
     User_qs = get_object_or_404(User, id=request.session['User_id'])
     SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
@@ -253,7 +253,7 @@ def orderPage(request):
                'SD_list': SD_qs,
                'Card_list': Card_qs}
 
-    return render(request, 'bookstore/orderPage.html', context)
+    return render(request, 'bookstore/ORDERPage.html', context)
 
 
 def CPorderPage(request):
@@ -270,7 +270,7 @@ def CPorderPage(request):
                'SD_list': SD_qs,
                'Card_list': Card_qs}
 
-    return render(request, 'bookstore/orderPage.html', context)
+    return render(request, 'bookstore/ORDERPage.html', context)
 
 
 def orderdonePage(request):
@@ -300,7 +300,7 @@ def orderdonePage(request):
     Order_qs.save()
     del request.session["Order_id"]
     context = {"User": User_qs}
-    return render(request, 'bookstore/orderdonePage.html', context)
+    return render(request, 'bookstore/ORDERdonePage.html', context)
 #쿠폰 사용하고 수정해야됨!!!!
 
 def couponselectPage(request, BookOrder_id):
@@ -311,7 +311,7 @@ def couponselectPage(request, BookOrder_id):
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
                'CP_list': CP_qs}
-    return render(request, 'bookstore/couponselectPage.html', context)
+    return render(request, 'bookstore/CPselectPage.html', context)
 
 
 def CouponDCpage(request, BookOrder_id, CP_id):
@@ -355,7 +355,7 @@ def CouponDCpage(request, BookOrder_id, CP_id):
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
                'CP_list': CP_qs}
-    return render(request, 'bookstore/couponselectPage.html', context)
+    return render(request, 'bookstore/CPselectPage.html', context)
 
 
 def cpcancelPage(request, BookOrder_id, CP_id):
@@ -368,13 +368,14 @@ def cpcancelPage(request, BookOrder_id, CP_id):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     BookOrder_qs = get_object_or_404(BookOrder, id=BookOrder_id)
     CP_qs = get_object_or_404(Coupon, id=CP_id)
+
     if BookOrder_qs.CP_kind != CP_qs.CP_kind:
         CP_qs = Coupon.objects.filter(User=User_qs).exclude(CP_state=2)
         context = {"User": User_qs,
                    'BookOrder_list': BookOrder_qs,
                    'CP_list': CP_qs,
                    'mes': "다른책에 사용중인 쿠폰입니다."}
-        return render(request, 'bookstore/couponselectPage.html', context)
+        return render(request, 'bookstore/CPselectPage.html', context)
     CP_qs.CP_state = 0
     CP_qs.save()
 
@@ -390,7 +391,7 @@ def cpcancelPage(request, BookOrder_id, CP_id):
     context = {"User": User_qs,
                'BookOrder_list': BookOrder_qs,
                'CP_list': CP_qs}
-    return render(request, 'bookstore/couponselectPage.html', context)
+    return render(request, 'bookstore/CPselectPage.html', context)
 
 def couponPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
@@ -398,7 +399,7 @@ def couponPage(request):
     context = {'User': User_qs,
                'CP_list': CP_qs}
 
-    return render(request, 'bookstore/couponPage.html', context)
+    return render(request, 'bookstore/CPPage.html', context)
 
 
 def userinfoPage(request):
@@ -414,11 +415,11 @@ def userinfoPage(request):
         User_qs.save()
 
         context = {"User": User_qs}
-        return render(request, 'bookstore/userinfoPage.html', context)
+        return render(request, 'bookstore/USERinfoPage.html', context)
     else:
         User_qs = get_object_or_404(User, id=request.session["User_id"])
         context = {'User': User_qs}
-        return render(request, 'bookstore/userinfoPage.html', context)
+        return render(request, 'bookstore/USERinfoPage.html', context)
 
 
 def sdaddPage(request):
@@ -432,13 +433,13 @@ def sdaddPage(request):
             sd_qs.save()
         else:
             context = {"mes": "빈칸이 있습니다.", }
-            return render(request, 'bookstore/sdaddPage.html', context)
+            return render(request, 'bookstore/SDaddPage.html', context)
 
     User_qs = get_object_or_404(User, id=request.session['User_id'])
     SD_qs = ShippingDestination.objects.filter(User=User_qs)
     context = {'User': User_qs,
                'SD_list': SD_qs}
-    return render(request, 'bookstore/sdaddPage.html', context)
+    return render(request, 'bookstore/SDaddPage.html', context)
 
 
 def cardaddPage(request):
@@ -455,13 +456,19 @@ def cardaddPage(request):
     Card_qs = Card.objects.filter(User=User_qs)
     context = {'User': User_qs,
                'Card_list': Card_qs}
-    return render(request, 'bookstore/cardaddPage.html', context)
+    return render(request, 'bookstore/CARDaddPage.html', context)
 
 
-def DPserchpage(request, name):
-    User_qs = get_object_or_404(User, User_name=name)
-    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
-
-    context = {"User": User_qs,
-               "DP_list": DP_qs}
-    return render(request, 'bookstore/dpserchPage.html', context)
+def DP(request):
+    try:
+        User_qs = get_object_or_404(User, id=request.session["User_id"])
+        if len(DongseoPay.objects.filter(User=User_qs)) == 0: #유저에 동서페이가 발급안된경우
+            context = {"Page": "EnrollPage"}
+            return render(request, "bookstore/CP", context)
+        else:   #페이 발급되어 있는경우
+            context = {"User": User_qs, "DP_list": DP_qs}
+        return render(request, 'bookstore/DP_ref.html', context)
+    except KeyError:
+        pass
+    mes = "세션이 만료되었습니다. 다시로그인해주세요."
+    return HttpResponseRedirect(reverse('bookstore:login'), args=[mes])

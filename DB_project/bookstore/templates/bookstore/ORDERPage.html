@@ -10,36 +10,56 @@
     <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
     <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
     <a href="{% url 'bookstore:cart' %}">장바구니</a></br></br></br>
-    <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
-    <a href="{% url 'bookstore:orderdone' %}">구매하기</a></br></br>
 
-    <p>상품명 / 정가 / 수량 / 합계 / 할인가 / 쿠폰</p>
-    {% for i in BookOrder_list %}
-        <p style="display:inline">{{i.Book.Book_name}} /</p><!--책이름-->
-        <p style="display:inline">{{i.Book.Book_price}} /</p><!--책정가-->
-        <p style="display:inline">{{i.BO_count}} /</p><!--책수량-->
-        <p style="display:inline">{{i.BO_price}} /</p><!--책할인가합계-->
-        <p style="display:inline">{{i.BO_DC_price}} /</p><!--책할인가-->
-        {% if i.CP_kind == "" %}
-            <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a></br>
+    {% if Page == "OrderlistPage" %}
+        <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
+        <a href="{% url 'bookstore:orderPayment' %}">결제하기</a></br></br>
+
+        <p>상품명 / 정가 / 수량 / 합계 / 할인가 / 쿠폰</p>
+        {% for i in BookOrder_list %}
+            <p style="display:inline">{{i.Book.Book_name}} /</p><!--책이름-->
+            <p style="display:inline">{{i.Book.Book_price}} /</p><!--책정가-->
+            <p style="display:inline">{{i.BO_count}} /</p><!--책수량-->
+            <p style="display:inline">{{i.BO_price}} /</p><!--책할인가합계-->
+            <p style="display:inline">{{i.BO_DC_price}} /</p><!--책할인가-->
+            {% if i.CP_kind == "" %}
+                <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a></br>
+            {% else %}
+                <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a>
+                <p style="display:inline">({{i.CP_kind}}) /</p><!--책할인가--></br>
+            {% endif %}
+        {% endfor %}</br>
+        <p>---------------------------------------------------------</p>
+        {% if Order_list.Order_DC_totalprice == 0 %}
+            <p>총 상품금액 : {{Order_list.Order_totalprice}}</p>
         {% else %}
-            <a href="{% url 'bookstore:couponselect' i.id%}"> 쿠폰 사용하기</a>
-            <p style="display:inline">({{i.CP_kind}}) /</p><!--책할인가--></br>
+            <p>총 상품금액 : {{Order_list.Order_DC_totalprice}}</p>
         {% endif %}
-    {% endfor %}</br>
-    <p>---------------------------------------------------------</p>
-    {% if Order_list.Order_DC_totalprice == 0 %}
-        <p>총 상품금액 : {{Order_list.Order_totalprice}}</p>
-    {% else %}
-        <p>총 상품금액 : {{Order_list.Order_DC_totalprice}}</p>
     {% endif %}
-    <p>---------------------------------------------------------</p>
-    <p>주문일자 : {{Order_list.Order_date}}</p>
-    <p>신용카드 종류 : {{Card_list.Card_name}}</p>
-    <p>신용카드 번호 : {{Card_list.Card_num}}</p>
-    <p>신용카드 유효기간 : {{Card_list.Card_date}}</p>
-    <p>배송지 우편번호 : {{SD_list.SD_num}}</p>
-    <p>배송지 기본주소 : {{SD_list.SD_ba}}</p>
-    <p>배송지 상세주소 : {{SD_list.SD_da}}</p>
+
+    {% if Page == "PaymentPage" %}
+        {% if Order_list.Order_DC_totalprice == 0 %}
+            <p>주문금액 : {{Order_list.Order_totalprice}}</p>
+        {% else %}
+            <p>주문금액 : {{Order_list.Order_DC_totalprice}}</p>
+        {% endif %}
+        <p>주문일자 : {{Order_list.Order_date}}</p>
+        <p>---------------------------------------------------------</p>
+        <h4 style="display:inline">결재카드&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h4>
+        <a href="{% url 'bookstore:cardadd' %}">결재카드 바꾸기</a>
+        <p>신용카드 종류 : {{Card_list.Card_name}}</p>
+        <p>신용카드 번호 : {{Card_list.Card_num}}</p>
+        <p>신용카드 유효기간 : {{Card_list.Card_date}}</p>
+        <p>---------------------------------------------------------</p>
+        <h4 style="display:inline">결재배송지&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h4>
+        <a href="{% url 'bookstore:sdadd' %}">배송지 바꾸기</a>
+        <p>배송지 우편번호 : {{SD_list.SD_num}}</p>
+        <p>배송지 기본주소 : {{SD_list.SD_ba}}</p>
+        <p>배송지 상세주소 : {{SD_list.SD_da}}</p>
+    {% endif %}
+
+    {% if Page == "OrderDonePage" %}
+        <p>주문이 완료되었습니다.</p>
+    {% endif %}
 </body>
 </html>

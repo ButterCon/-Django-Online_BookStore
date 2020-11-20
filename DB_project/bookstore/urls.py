@@ -13,6 +13,7 @@ urlpatterns = [
     path('<int:User_id>/home/', views.homePage, name='home'),
     ############################주문####################################
     path('order/', views.orderPage, name='order'),
+    path('orderPayment/', views.orderPaymentPage, name='orderPayment'),
     path('CPorder/', views.CPorderPage, name='CPorder'),
     path('orderdone/', views.orderdonePage, name='orderdone'),
     ############################장바구니#################################
@@ -21,9 +22,11 @@ urlpatterns = [
     path('<int:book_id>/sincartadd/', views.sincartaddPage, name='sincartadd'),
     path('<int:book_id>/cartdel/', views.cartdelPage, name='cartdel'),
     ############################회원정보수정##############################
-    path('userinfo/', views.userinfoPage, name='userinfo'),
-    path('sdadd/', views.sdaddPage, name='sdadd'),
-    path('cardadd/', views.cardaddPage, name='cardadd'),
+    path('userinfo/', views.User_info, name='userinfo'),
+    path('sdinfo/', views.SD_info, name='sdinfo'),
+    path('<int:SD_id>/sdadd/', views.SD_add, name='sdadd'),
+    path('cardinfo/', views.CARD_info, name='cardinfo'),
+    path('<int:CARD_id>/cardadd/', views.CARD_add, name='cardadd'),
     ############################쿠폰####################################
     path('coupon/', views.couponPage, name='coupon'),    #회원수정->쿠폰
     path('<int:BookOrder_id>/couponselect/', views.couponselectPage, name='couponselect'),    #주문->쿠폰

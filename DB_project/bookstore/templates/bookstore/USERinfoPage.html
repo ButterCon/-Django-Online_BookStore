@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="content-Type" content="text/html"; charset=UTF-8>
-    <title>userinfoPage</title>
+    <title>userPage</title>
 </head>
 <body>
     {% if mes %}
@@ -10,19 +10,89 @@
             alert("{{ mes }}")
         </script>
     {% endif %}
-    <h3 style="display:inline">{{User.User_name}}님 회원수정</h3>
-    <a href="{% url 'bookstore:login' %}">로그아웃</a>
-    <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
-    <a href="{% url 'bookstore:coupon' %}">내쿠폰 보기</a>
-    <a href="{% url 'bookstore:DPref' %}">동서페이 보기</a></br></br></br>
-    <form action="{% url 'bookstore:userinfo' %}" method="post">
-    {% csrf_token %}
-        이름 : <input type="text" value="{{User.User_name}}" name="name"></br>
-        아이디 : <input type="text" value="{{User.User_id}}" name="id"></br>
-        패스워드 : <input type="password" value="{{User.User_pw}}" name="pw"></br>
-        <a href="{%url 'bookstore:sdadd' %}">주소 추가/수정</a></br>
-        <a href="{%url 'bookstore:cardadd' %}">카드 추가/수정</a></br>
-        <input type="submit" name="Register"></br>
-    </form>
+
+    <!--InfoPage-->
+    {% if Page == "InfoPage" %}
+        <h3 style="display:inline">{{User.User_name}}님 회원수정</h3>
+        <a href="{% url 'bookstore:login' %}">로그아웃</a>
+        <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
+        <a href="{% url 'bookstore:coupon' %}">내쿠폰 보기</a>
+        <a href="{% url 'bookstore:DPref' %}">동서페이 보기</a></br></br></br>
+        <form action="{% url 'bookstore:userinfo' %}" method="post">
+        {% csrf_token %}
+            이름 : <input type="text" value="{{User.User_name}}" name="name"></br>
+            아이디 : <input type="text" value="{{User.User_id}}" name="id"></br>
+            패스워드 : <input type="password" value="{{User.User_pw}}" name="pw"></br>
+            <input type="submit" name="Register"></br>
+        </form>
+        <p>---------------------------------------------------------</p>
+        {% for i in SD_list %}
+            {% if i.id == User.Select_SD_id %}
+                <p>기본 주소 : {{i.SD_ba}}{{i.SD_da}}</p>
+            {% endif %}
+        {% endfor %}
+        <a href="{% url 'bookstore:sdinfo' %}">주소 추가/수정</a></br>
+        <p>---------------------------------------------------------</p>
+        {% for i in Card_list %}
+            {% if i.id == User.Select_Card_id %}
+                <p>기본 카드 : {{i.Card_name}}</p>
+            {% endif %}
+        {% endfor %}
+        <a href="{% url 'bookstore:cardinfo' %}">카드 추가/수정</a></br>
+    {% endif %}
+
+    <!--SDPage-->
+    {% if Page == "SDPage" %}
+        <h3 style="display:inline">{{User.User_name}}님 주소수정 페이지</h3>
+        <a href="{% url 'bookstore:login' %}">로그아웃</a>
+        <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
+        <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br>
+        <p>주소 추가</p>
+        <form action="{% url 'bookstore:sdinfo' %}" method="post">
+        {% csrf_token %}
+            우편번호 : <input type="text" value="{{SD_list.SD_num}}" name="sd_num"></br>
+            기본주소 : <input type="text" value="{{SD_list.SD_ba}}" name="sd_ba"></br>
+            상세주소 : <input type="text" value="{{SD_list.SD_da}}" name="sd_da"></br>
+            <input type="submit" name="Register"></br>
+        </form>
+        <p>주소 보기</p>
+        {% for i in SD_list %}
+            {% if i.id != User.Select_SD_id %}
+                <a href="{% url 'bookstore:sdadd' i.id %}">기본배송지 선택</a>
+            {% else %}
+                <p>기본배송지</p>
+            {% endif %}
+            우편번호 : {{i.SD_num}}</br>
+            기본주소 : {{i.SD_ba}}</br>
+            상세주소 : {{i.SD_da}}</br></br>
+        {% endfor %}
+    {% endif %}
+
+    <!--CardPage-->
+    {% if Page == "CardPage" %}
+        <h3 style="display:inline">{{User.User_name}}님 카드 수정 페이지</h3>
+        <a href="{% url 'bookstore:login' %}">로그아웃</a>
+        <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
+        <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br>
+        <p>카드 추가</p>
+        <form action="{% url 'bookstore:cardinfo' %}" method="post">
+        {% csrf_token %}
+            카드 이름 : <input type="text" value="{{Card_list.Card_name}}" name="card_name"></br>
+            카드 번호 : <input type="text" value="{{Card_list.Card_num}}" name="card_num"></br>
+            카드 유효기간 : <input type="text" value="{{Card_list.Card_date}}" name="card_date"></br>
+            <input type="submit" name="Register"></br>
+        </form>
+        <p>카드 보기</p>
+        {% for i in Card_list %}
+            {% if i.id != User.Select_Card_id %}
+                <a href="{% url 'bookstore:cardadd' i.id %}">기본카드 선택</a>
+            {% else %}
+                <p>기본카드</p>
+            {% endif %}
+            카드 이름 : {{i.Card_name}}</br>
+            카드 번호 : {{i.Card_num}}</br>
+            카드 유효기간 : {{i.Card_date}}</br></br>
+        {% endfor %}
+    {% endif %}
 </body>
 </html>

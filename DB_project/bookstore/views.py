@@ -29,11 +29,29 @@ def regPage(request):
     if request.method == "POST":    #값을 받을경우 실행
         if request.POST['name'] != "" and request.POST['id'] != "" and request.POST['pw'] != "" and request.POST['re_pw'] != "" and request.POST['sd_num'] != "" and request.POST['sd_ba'] != "" and request.POST['sd_da'] != "" and request.POST['card_name'] != "" and request.POST['card_num'] != "" and request.POST['card_date'] != "":
             if request.POST['pw'] == request.POST['re_pw']: #비밀번호가 같을경우
-                User_qs = User(User_id=request.POST['id'], User_pw=request.POST['pw'], User_name=request.POST['name'])
-                User_qs.save()
-                ShippingDestination(User=User_qs, SD_num=request.POST['sd_num'], SD_ba=request.POST['sd_ba'], SD_da=request.POST['sd_da']).save()
-                Card(User=User_qs, Card_name=request.POST['card_name'], Card_num=request.POST['card_num'], Card_date=request.POST['card_date']).save()
-                return HttpResponseRedirect(reverse('bookstore:login'))
+                if len(User.objects.filter(User_id=request.POST['id'])) == 0:   #존재하는 아이디일경우
+                    User_qs = User(User_id=request.POST['id'],
+                                   User_pw=request.POST['pw'],
+                                   User_name=request.POST['name'])
+                    User_qs.save()
+                    SD_qs = ShippingDestination(User=User_qs,
+                                                SD_num=request.POST['sd_num'],
+                                                SD_ba=request.POST['sd_ba'],
+                                                SD_da=request.POST['sd_da'])
+                    SD_qs.save()
+                    Card_qs = Card(User=User_qs,
+                                   Card_name=request.POST['card_name'],
+                                   Card_num=request.POST['card_num'],
+                                   Card_date=request.POST['card_date'])
+                    Card_qs.save()
+                    ShoppingBasket(User=User_qs).save()
+                    User_qs.Select_SD_id = SD_qs.id
+                    User_qs.Select_Card_id = Card_qs.id
+                    User_qs.save()
+                    return HttpResponseRedirect(reverse('bookstore:login'))
+                else:
+                    context = {"mes": "존재하는 아이디입니다."}
+                    return render(request, "bookstore/REGPage.html", context)
             else:
                 context = {"mes": "아이디 혹은 비밀번호가 일치하지 않습니다."}
                 return render(request, "bookstore/REGPage.html", context)
@@ -46,21 +64,21 @@ def regPage(request):
 
 def login(request):
     if request.method == "POST":
-        try:
-            if request.POST['id'] != "" and request.POST['pw'] != "":
-                if request.POST['id'] == get_object_or_404(User, User_id=request.POST['id']).User_id and request.POST['pw'] == get_object_or_404(User, User_pw=request.POST['pw']).User_pw:
-
-                    #세션 전달
-                    User_qs = get_object_or_404(User, User_id=request.POST['id'])
-                    request.session['User_id'] = User_qs.id
-                    return HttpResponseRedirect(reverse('bookstore:home', args=[User_qs.id]))
-                else:
-                    return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
+        post_id = request.POST['id']
+        post_pw = request.POST['pw']
+        if post_id != "" and post_pw != "":
+            if post_id == get_object_or_404(User, User_id=post_id).User_id and \
+                    post_pw == get_object_or_404(User, User_id=post_id).User_pw:
+                #세션 전달
+                User_qs = get_object_or_404(User, User_id=post_id)
+                print("여기")
+                request.session['User_id'] = User_qs.id
+                return HttpResponseRedirect(reverse('bookstore:home', args=[User_qs.id]))
             else:
-                return render(request, "bookstore/loginPage.html", {"mes": "빈칸이 있습니다."})
-        except:
-            return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
-    if request.method == "GET":
+                return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
+        else:
+            return render(request, "bookstore/loginPage.html", {"mes": "빈칸이 있습니다."})
+    elif request.method == "GET":
         return render(request, 'bookstore/loginPage.html')
 
 
@@ -195,22 +213,19 @@ def orderPage(request):
         User_qs = get_object_or_404(User, id=request.session['User_id'])
         Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
         BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
-        Card_qs = Card.objects.filter(User=User_qs).first()
-        SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
 
+        page = 'OrderlistPage'
         context = {"User": User_qs,
                    "Order_list": Order_qs,
                    "BookOrder_list": BookOrder_qs,
-                   'SD_list': SD_qs,
-                   'Card_list': Card_qs}
+                   'Page': page}
 
         return render(request, 'bookstore/ORDERPage.html', context)
 
     User_qs = get_object_or_404(User, id=request.session['User_id'])
-    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
-    Card_qs = Card.objects.filter(User=User_qs).first()
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+
     if len(BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)) != 0:    #해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
         BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
         print("바로구매")
@@ -246,29 +261,43 @@ def orderPage(request):
     #Order_qs.Order_DC_totalprice = Order_qs.Order_totalprice
     Order_qs.save()
 
-
+    page = 'OrderlistPage'
     context = {"User": User_qs,
                "Order_list": Order_qs,
                "BookOrder_list": BookOrder_qs,
-               'SD_list': SD_qs,
-               'Card_list': Card_qs}
+               'Page': page}
 
     return render(request, 'bookstore/ORDERPage.html', context)
 
 
+def orderPaymentPage(request):
+    # 결제 뷰,
+    # 결제 후 주문 완료로
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+    SD_qs = get_object_or_404(ShippingDestination, id=User_qs.Select_SD_id)
+    Card_qs = get_object_or_404(Card, id=User_qs.Select_Card_id)
+
+    page = "PaymentPage"
+    context = {"User": User_qs,
+               "SD_list": SD_qs,
+               "Card_list": Card_qs,
+               "Order_list": Order_qs,
+               "Page": page}
+
+    return render(request, 'bookstore/ORDERPage.html', context)
+#수정중
+
 def CPorderPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
-    SD_qs = ShippingDestination.objects.filter(User=User_qs).first()
-    Card_qs = Card.objects.filter(User=User_qs).first()
-
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
 
+    page = 'OrderlistPage'
     context = {"User": User_qs,
                "Order_list": Order_qs,
                "BookOrder_list": BookOrder_qs,
-               'SD_list': SD_qs,
-               'Card_list': Card_qs}
+               'Page': page}
 
     return render(request, 'bookstore/ORDERPage.html', context)
 
@@ -299,9 +328,13 @@ def orderdonePage(request):
     Order_qs.Order_con = 1
     Order_qs.save()
     del request.session["Order_id"]
-    context = {"User": User_qs}
-    return render(request, 'bookstore/ORDERdonePage.html', context)
-#쿠폰 사용하고 수정해야됨!!!!
+
+    page = 'OrderlistPage'
+    context = {"User": User_qs,
+               "BookOrder_list": BookOrder_qs,
+               'Page': page}
+    return render(request, 'bookstore/ORDERPage.html', context)
+
 
 def couponselectPage(request, BookOrder_id):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
@@ -403,61 +436,151 @@ def couponPage(request):
     return render(request, 'bookstore/CPPage.html', context)
 
 
-def userinfoPage(request):
+def User_info(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Card_qs = Card.objects.filter(User=User_qs)
+    SD_qs = ShippingDestination.objects.filter(User=User_qs)
+
     if request.method == "POST":
         name = request.POST['name']
         id = request.POST['id']
         pw = request.POST['pw']
         # 유저 저장
-        User_qs = get_object_or_404(User, id=request.session["User_id"])
         User_qs.User_name = name
         User_qs.User_id = id
         User_qs.User_pw = pw
         User_qs.save()
 
-        context = {"User": User_qs}
+        page = "InfoPage"
+        context = {"User": User_qs,
+                   "Card_list": Card_qs,
+                   "SD_list": SD_qs,
+                   "Page": page}
+
         return render(request, 'bookstore/USERinfoPage.html', context)
-    else:
-        User_qs = get_object_or_404(User, id=request.session["User_id"])
-        context = {'User': User_qs}
+
+    elif request.method == "GET":
+        page = "InfoPage"
+        context = {"User": User_qs,
+                   "Card_list": Card_qs,
+                   "SD_list": SD_qs,
+                   "Page": page}
+
         return render(request, 'bookstore/USERinfoPage.html', context)
 
 
-def sdaddPage(request):
+def SD_info(request):
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
+
     if request.method == "POST":
+        #빈칸이 없는경우
         if request.POST['sd_num'] != "" and request.POST['sd_ba'] != "" and request.POST['sd_da'] != "":
             SD_num = request.POST['sd_num'] #우편번호
             SD_ba = request.POST['sd_ba'] #기본주소
             SD_da = request.POST['sd_da'] #상세주소
             # 유저신규배송지 저장
-            sd_qs = ShippingDestination(User=get_object_or_404(User, id=request.session["User_id"]), SD_num=SD_num, SD_ba=SD_ba, SD_da=SD_da)
-            sd_qs.save()
+            ShippingDestination(User=User_qs,
+                                SD_num=SD_num,
+                                SD_ba=SD_ba,
+                                SD_da=SD_da).save()
+
+            mes = "배송지 추가가 완료되었습니다."
+            page = "SDPage"
+            context = {"User": User_qs,
+                       "Page": page,
+                       "mes": mes}
+
+            return render(request, 'bookstore/USERinfoPage.html', context)
+        #빈칸이 있는경우
         else:
-            context = {"mes": "빈칸이 있습니다.", }
-            return render(request, 'bookstore/SDaddPage.html', context)
+            mes = "빈칸이 있습니다."
+            page = "SDPage"
+            context = {"User": User_qs,
+                       "Page": page,
+                       "mes": mes}
 
+            return render(request, 'bookstore/USERinfoPage.html', context)
+
+    elif request.method == "GET":
+        SD_qs = ShippingDestination.objects.filter(User=User_qs)
+
+        page = "SDPage"
+        context = {'User': User_qs,
+                   'Page': page,
+                   'SD_list': SD_qs}
+
+        return render(request, 'bookstore/USERinfoPage.html', context)
+
+
+def SD_add(request, SD_id):
     User_qs = get_object_or_404(User, id=request.session['User_id'])
-    SD_qs = ShippingDestination.objects.filter(User=User_qs)
-    context = {'User': User_qs,
-               'SD_list': SD_qs}
-    return render(request, 'bookstore/SDaddPage.html', context)
+    User_qs.Select_SD_id = SD_id
+    User_qs.save()
+
+    mes = "기본배송지 선택이 완료되었습니다."
+    page = "SDPage"
+    context = {"User": User_qs,
+               "Page": page,
+               "mes": mes}
+
+    return render(request, 'bookstore/USERinfoPage.html', context)
 
 
-def cardaddPage(request):
+def CARD_info(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+
     if request.method == "POST":
+        #빈칸이 없는경우
         if request.POST['card_name'] != "" and request.POST['card_num'] != "" and request.POST['card_date'] != "":
             card_name = request.POST['card_name']
             card_num = request.POST['card_num']
             card_date = request.POST['card_date']
             # 유저 신규카드 저장
-            card_qs = Card(User=get_object_or_404(User, User_name=request.session["User_id"]), Card_name=card_name, Card_num=card_num, Card_date=card_date)
-            card_qs.save()
+            Card(User=User_qs,
+                 Card_name=card_name,
+                 Card_num=card_num,
+                 Card_date=card_date).save()
 
-    User_qs = get_object_or_404(User, id=request.session["User_id"])
-    Card_qs = Card.objects.filter(User=User_qs)
-    context = {'User': User_qs,
-               'Card_list': Card_qs}
-    return render(request, 'bookstore/CARDaddPage.html', context)
+            mes = "카드 추가가 완료되었습니다."
+            page = "CardPage"
+            context = {"User": User_qs,
+                       "Page": page,
+                       "mes": mes}
+
+            return render(request, 'bookstore/USERinfoPage.html', context)
+        #빈칸이 있는경우
+        else:
+            mes = "빈칸이 있습니다."
+            page = "CardPage"
+            context = {"User": User_qs,
+                       "Page": page,
+                       "mes": mes}
+
+            return render(request, 'bookstore/USERinfoPage.html', context)
+
+    elif request.method == "GET":
+        Card_qs = Card.objects.filter(User=User_qs)
+
+        page = "CardPage"
+        context = {'User': User_qs,
+                   'Page': page,
+                   'Card_list': Card_qs}
+
+        return render(request, 'bookstore/USERinfoPage.html', context)
+
+
+def CARD_add(request, CARD_id):
+    User_qs = get_object_or_404(User, id=request.session['User_id'])
+    User_qs.Select_Card_id = CARD_id
+    User_qs.save()
+
+    mes = "카드 추가가 완료되었습니다."
+    page = "CardPage"
+    context = {"User": User_qs,
+               "Page": page,
+               "mes": mes}
+
+    return render(request, 'bookstore/USERinfoPage.html', context)
 
 
 def DP_ref(request):
@@ -507,17 +630,20 @@ def DP_charege(request):
     DP_qs = get_object_or_404(DongseoPay, User=User_qs)
 
     if request.method == "POST":
-        page = "ReferencePage"
-        mes = "동서페이가 충전되었습니다."
-
         #최근에 충전된 금액 넣어주기기
         DP_qs.DP_ChargePrice = int(request.POST["DP_ChargePrice"])
         #기존금액이랑 충전액 더해주기
         DP_qs.DP_price += int(request.POST["DP_ChargePrice"])
         DP_qs.save()
 
-        context = {"User": User_qs, "DP_list": DP_qs, "Page": page, "mes": mes}
+        page = "ReferencePage"
+        mes = "동서페이가 충전되었습니다."
+        context = {"User": User_qs,
+                   "DP_list": DP_qs,
+                   "Page": page,
+                   "mes": mes}
         return render(request, "bookstore/DP.html", context)
+
     elif request.method == "GET":
         page = 'ChargePage'
         context = {"User": User_qs, "Page": page}
@@ -526,11 +652,14 @@ def DP_charege(request):
 
 def DP_del(request):
     #DP해지
-    User_qs = get_object_or_404(User, id= request.session["User_id"])
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
     DP_qs = get_object_or_404(DongseoPay, User=User_qs)
     DP_qs.delete()
 
+    page = 'ReferencePage'
     mes = "동서페이가 해지되었습니다."
     context = {"User": User_qs,
+               "DP_list": DP_qs,
+               "Page": page,
                "mes": mes}
-    return render(request, "bookstore/USERinfoPage.html", context)
+    return render(request, "bookstore/DP.html", context)

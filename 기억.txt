@@ -44,3 +44,7 @@ if BookOrder.CP_kind != Coupon.CP_kind:
             mes = "발급을 취소하였습니다."
     else: #동서페이 발급된 경우
 
+#Card, SD 선택하기
+내정보에서 Card, SD선택시 리스트를 출력해준다.
+선택하기 누를시 User.Select_Card(SD)_id 입력해준다.
+

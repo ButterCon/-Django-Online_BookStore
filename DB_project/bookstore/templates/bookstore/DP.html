@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-Type" content="text/html"; charset=UTF-8>
+    <title>userinfo_DP_Page</title>
+</head>
+<body>
+    {% if mes %}
+        <script>
+            alert("{{ mes }}")
+        </script>
+    {% endif %}
+    <h3 style="display:inline">{{User.User_name}}님 동서페이 페이지</h3>
+    <a href="{% url 'bookstore:login' %}">로그아웃</a>
+    <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
+    <a href="{% url 'bookstore:userinfo' %}">정보수정</a></br></br></br>
+
+    <!--EnrollPage-->
+    {% if Page == "EnrollPage" %}
+        <p>{{User.User.name}}님은 현재 동서페이 사용자가 아닙니다.</p>
+        <p style="display:inline">등록하시겠습니까?</p>
+        <a href="{% url 'bookstore:DPissue' %}">등록</a>
+        <a href="{% url 'bookstore:userinfo' %}">미등록</a>
+    {% endif %}
+
+    <!--ReferencePage-->
+    {% if Page == "ReferencePage" %}
+        <a href="{% url 'bookstore:DPcharge' %}">충전하기</a>
+        <p>최근거래일 : {{DP_list.DP_TradingDate}}</p>
+        <p>최근거래번호 : {{DP_list.DP_history}}</p>
+        <p>---------------------------------------------------------</p>
+        <p>잔액 : {{DP_list.DP_price}}</p>
+        <p>충전금액 : {{DP_list.DP_ChargePrice}}</p>
+        <p>사용금액 : {{DP_list.DP_UsedPrice}}</p></br>
+        <h3><b>!!!!!!!!!!!!!동서페이 해지하기!!!!!!!!!!!!!</b></h3>
+        <b>동서페이 해지할경우 남은금액은 신용카드로 환불됩니다.</b><br>
+        <a href="{% url 'bookstore:DPdel' %}">해지하기</a>
+    {% endif %}
+
+    <!--CharegePage-->
+    {% if Page == "ChargePage" %}
+        <form action="{% url 'bookstore:DPcharge' %}" method="post">
+        {% csrf_token %}
+            충전 금액 : <input type="text" name="DP_ChargePrice">
+            <input type="submit" name="Register"></br>
+        </form>
+    {% endif %}
+</body>
+</html>

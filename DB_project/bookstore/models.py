@@ -5,6 +5,8 @@ class User(models.Model):
     User_id = models.CharField(default='', max_length=50)
     User_pw = models.CharField(max_length=100)
     User_name = models.CharField(max_length=100)
+    Select_SD_id = models.IntegerField(default=0)
+    Select_Card_id = models.IntegerField(default=0)
 
     def __str__(self):
         return self.User_id
@@ -93,8 +95,8 @@ class Coupon(models.Model): #쿠폰
 class DongseoPay(models.Model): #동서페이
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     DP_TradingDate = models.DateTimeField(default=now, blank=True)
-    DP_ChargePrice = models.IntegerField(default=0)
-    DP_UsedPrice = models.IntegerField(default=0)
+    DP_ChargePrice = models.IntegerField(default=0) #마지막 충전액
+    DP_UsedPrice = models.IntegerField(default=0)   #사용액
     DP_price = models.IntegerField(default=0)   #잔액
     DP_history = models.IntegerField(default=0) #주문목록id넣기
 

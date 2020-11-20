@@ -393,6 +393,7 @@ def cpcancelPage(request, BookOrder_id, CP_id):
                'CP_list': CP_qs}
     return render(request, 'bookstore/CPselectPage.html', context)
 
+
 def couponPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     CP_qs = Coupon.objects.filter(User=User_qs, CP_state=0)  #사용안한 쿠폰 가져온다
@@ -459,16 +460,77 @@ def cardaddPage(request):
     return render(request, 'bookstore/CARDaddPage.html', context)
 
 
-def DP(request):
+def DP_ref(request):
     try:
         User_qs = get_object_or_404(User, id=request.session["User_id"])
-        if len(DongseoPay.objects.filter(User=User_qs)) == 0: #유저에 동서페이가 발급안된경우
-            context = {"Page": "EnrollPage"}
-            return render(request, "bookstore/CP", context)
-        else:   #페이 발급되어 있는경우
-            context = {"User": User_qs, "DP_list": DP_qs}
-        return render(request, 'bookstore/DP_ref.html', context)
+        if len(DongseoPay.objects.filter(User=User_qs)) == 0:
+            # 유저에 동서페이가 발급안된경우
+            mes = '동서페이 미발급'
+            page = 'EnrollPage'
+            context = {"User": User_qs,
+                       "Page": page,
+                       "mes": mes}
+            return render(request, "bookstore/DP.html", context)
+        else:
+            # 페이 발급되어 있는경우
+            DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+
+            page = 'ReferencePage'
+            context = {"User": User_qs,
+                       "DP_list": DP_qs,
+                       "Page": page}
+        return render(request, 'bookstore/DP.html', context)
     except KeyError:
         pass
     mes = "세션이 만료되었습니다. 다시로그인해주세요."
     return HttpResponseRedirect(reverse('bookstore:login'), args=[mes])
+
+
+def DP_issue(request):
+    #DP등록
+    User_qs = get_object_or_404(User, id= request.session["User_id"])
+    DP_qs = DongseoPay(User=User_qs) #DP 생성
+    DP_qs.save()
+
+    page = 'ReferencePage'
+    mes = "동서페이가 발급되었습니다"
+    context = {"User": User_qs,
+               "DP_list": DP_qs,
+               "Page": page,
+               "mes": mes}
+    return render(request, "bookstore/DP.html", context)
+
+
+def DP_charege(request):
+    #DP충전
+    User_qs = get_object_or_404(User, id= request.session["User_id"])
+    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+
+    if request.method == "POST":
+        page = "ReferencePage"
+        mes = "동서페이가 충전되었습니다."
+
+        #최근에 충전된 금액 넣어주기기
+        DP_qs.DP_ChargePrice = int(request.POST["DP_ChargePrice"])
+        #기존금액이랑 충전액 더해주기
+        DP_qs.DP_price += int(request.POST["DP_ChargePrice"])
+        DP_qs.save()
+
+        context = {"User": User_qs, "DP_list": DP_qs, "Page": page, "mes": mes}
+        return render(request, "bookstore/DP.html", context)
+    elif request.method == "GET":
+        page = 'ChargePage'
+        context = {"User": User_qs, "Page": page}
+        return render(request, "bookstore/DP.html", context)
+
+
+def DP_del(request):
+    #DP해지
+    User_qs = get_object_or_404(User, id= request.session["User_id"])
+    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+    DP_qs.delete()
+
+    mes = "동서페이가 해지되었습니다."
+    context = {"User": User_qs,
+               "mes": mes}
+    return render(request, "bookstore/USERinfoPage.html", context)

@@ -30,5 +30,8 @@ urlpatterns = [
     path('<int:BookOrder_id>/<int:CP_id>/cpcancel/', views.cpcancelPage, name="cpcancel"),     #쿠폰 선택 취소 페이지
     path('<int:BookOrder_id>/<int:CP_id>/couponDC/', views.CouponDCpage, name='couponDC'),    #쿠폰 할인 값 넣기
     ############################동서페이####################################
-    path('DP/', views.DP, name='DP')    #동서페이 조회
+    path('DPref/', views.DP_ref, name='DPref'),    #동서페이 조회
+    path('DPissue/', views.DP_issue, name='DPissue'),    #동서페이 발급
+    path('DPcharge/', views.DP_charege, name='DPcharge'),    #동서페이 충전
+    path('DPdel/', views.DP_del, name='DPdel'),    #동서페이 해지
 ]

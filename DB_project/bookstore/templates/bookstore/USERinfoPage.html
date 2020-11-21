@@ -58,13 +58,14 @@
         <p>주소 보기</p>
         {% for i in SD_list %}
             {% if i.id != User.Select_SD_id %}
-                <a href="{% url 'bookstore:sdadd' i.id %}">기본배송지 선택</a>
+                <a href="{% url 'bookstore:sdadd' i.id %}">기본배송지 선택</a></br></br>
             {% else %}
                 <p>기본배송지</p>
             {% endif %}
             우편번호 : {{i.SD_num}}</br>
             기본주소 : {{i.SD_ba}}</br>
             상세주소 : {{i.SD_da}}</br></br>
+            ---------------------------------------------------------</br>
         {% endfor %}
     {% endif %}
 
@@ -85,13 +86,14 @@
         <p>카드 보기</p>
         {% for i in Card_list %}
             {% if i.id != User.Select_Card_id %}
-                <a href="{% url 'bookstore:cardadd' i.id %}">기본카드 선택</a>
+                <a href="{% url 'bookstore:cardadd' i.id %}">기본카드 선택</a></br></br>
             {% else %}
                 <p>기본카드</p>
             {% endif %}
             카드 이름 : {{i.Card_name}}</br>
             카드 번호 : {{i.Card_num}}</br>
-            카드 유효기간 : {{i.Card_date}}</br></br>
+            카드 유효기간 : {{i.Card_date}}</br>
+            ---------------------------------------------------------</br>
         {% endfor %}
     {% endif %}
 </body>

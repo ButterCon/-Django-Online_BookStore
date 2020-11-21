@@ -256,7 +256,6 @@ def orderPage(request):
 
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
 
-    Order_qs.Order_date = datetime.datetime.now()
     Order_qs.Order_totalprice = total_price
     #Order_qs.Order_DC_totalprice = Order_qs.Order_totalprice
     Order_qs.save()
@@ -277,15 +276,52 @@ def orderPaymentPage(request):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     SD_qs = get_object_or_404(ShippingDestination, id=User_qs.Select_SD_id)
     Card_qs = get_object_or_404(Card, id=User_qs.Select_Card_id)
+    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+    if request.method == "POST":
+        if int(request.Post["DP_UsedPrice"]) > DP_qs.DP_price:
+            page = "PaymentPage"
+            mes = "사용금액이 잔액을 초과합니다."
+            context = {"User": User_qs,
+                       "SD_list": SD_qs,
+                       "Card_list": Card_qs,
+                       "Order_list": Order_qs,
+                       "DP_list": DP_qs,
+                       "mes": mes,
+                       "Page": page}
 
-    page = "PaymentPage"
-    context = {"User": User_qs,
-               "SD_list": SD_qs,
-               "Card_list": Card_qs,
-               "Order_list": Order_qs,
-               "Page": page}
+            return render(request, 'bookstore/ORDERPage.html', context)
 
-    return render(request, 'bookstore/ORDERPage.html', context)
+        else:
+            DP_qs.DP_UsedPrice = int(request.POST["DP_UsedPrice"])
+            DP_qs.save()
+            if Order_qs.Order_DC_totalprice != 0:   #할인 한경우
+                Order_qs.Order_DP = Order_qs.Order_DC_totalprice - int(request.POST["DP_UsedPrice"])
+            elif Order_qs.Order_DC_totalprice == 0: #할인 안한경우
+                Order_qs.Order_DP = Order_qs.Order_totalprice - int(request.POST["DP_UsedPrice"])
+            Order_qs.save()
+
+            page = "PaymentPage"
+            context = {"User": User_qs,
+                       "SD_list": SD_qs,
+                       "Card_list": Card_qs,
+                       "Order_list": Order_qs,
+                       "DP_list": DP_qs,
+                       "Page": page}
+
+            return render(request, 'bookstore/ORDERPage.html', context)
+
+    elif request.method == "GET":
+        Order_qs.Order_date = datetime.datetime.now()
+        Order_qs.save()
+        page = "PaymentPage"
+        context = {"User": User_qs,
+                   "SD_list": SD_qs,
+                   "Card_list": Card_qs,
+                   "Order_list": Order_qs,
+                   "DP_list": DP_qs,
+                   "Page": page}
+
+        return render(request, 'bookstore/ORDERPage.html', context)
 #수정중
 
 def CPorderPage(request):
@@ -329,7 +365,7 @@ def orderdonePage(request):
     Order_qs.save()
     del request.session["Order_id"]
 
-    page = 'OrderlistPage'
+    page = 'OrderDonePage'
     context = {"User": User_qs,
                "BookOrder_list": BookOrder_qs,
                'Page': page}
@@ -484,18 +520,22 @@ def SD_info(request):
                                 SD_ba=SD_ba,
                                 SD_da=SD_da).save()
 
+            SD_qs = ShippingDestination.objects.filter(User=User_qs)
             mes = "배송지 추가가 완료되었습니다."
             page = "SDPage"
             context = {"User": User_qs,
+                       "SD_list": SD_qs,
                        "Page": page,
                        "mes": mes}
 
             return render(request, 'bookstore/USERinfoPage.html', context)
         #빈칸이 있는경우
         else:
+            SD_qs = ShippingDestination.objects.filter(User=User_qs)
             mes = "빈칸이 있습니다."
             page = "SDPage"
             context = {"User": User_qs,
+                       "SD_list": SD_qs,
                        "Page": page,
                        "mes": mes}
 
@@ -517,9 +557,11 @@ def SD_add(request, SD_id):
     User_qs.Select_SD_id = SD_id
     User_qs.save()
 
+    SD_qs = ShippingDestination.objects.filter(User=User_qs)
     mes = "기본배송지 선택이 완료되었습니다."
     page = "SDPage"
     context = {"User": User_qs,
+               "SD_list": SD_qs,
                "Page": page,
                "mes": mes}
 
@@ -541,18 +583,22 @@ def CARD_info(request):
                  Card_num=card_num,
                  Card_date=card_date).save()
 
+            Card_qs = Card.objects.filter(User=User_qs)
             mes = "카드 추가가 완료되었습니다."
             page = "CardPage"
             context = {"User": User_qs,
+                       'Card_list': Card_qs,
                        "Page": page,
                        "mes": mes}
 
             return render(request, 'bookstore/USERinfoPage.html', context)
         #빈칸이 있는경우
         else:
+            Card_qs = Card.objects.filter(User=User_qs)
             mes = "빈칸이 있습니다."
             page = "CardPage"
             context = {"User": User_qs,
+                       "Card_list": Card_qs,
                        "Page": page,
                        "mes": mes}
 
@@ -574,9 +620,11 @@ def CARD_add(request, CARD_id):
     User_qs.Select_Card_id = CARD_id
     User_qs.save()
 
+    Card_qs = Card.objects.filter(User=User_qs)
     mes = "카드 추가가 완료되었습니다."
     page = "CardPage"
     context = {"User": User_qs,
+               "Card_list": Card_qs,
                "Page": page,
                "mes": mes}
 
@@ -656,10 +704,9 @@ def DP_del(request):
     DP_qs = get_object_or_404(DongseoPay, User=User_qs)
     DP_qs.delete()
 
-    page = 'ReferencePage'
+    page = 'InfoPage'
     mes = "동서페이가 해지되었습니다."
     context = {"User": User_qs,
-               "DP_list": DP_qs,
                "Page": page,
                "mes": mes}
-    return render(request, "bookstore/DP.html", context)
+    return render(request, "bookstore/USERinfoPage.html", context)

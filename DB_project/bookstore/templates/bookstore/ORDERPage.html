@@ -5,12 +5,18 @@
     <title>OrderPage</title>
 </head>
 <body>
+    {% if mes %}
+        <script>
+            alert("{{mes}}")
+        </script>
+    {% endif %}
     <h3 style="display:inline">{{User.User_name}}님 구매페이지</h3>
     <a href="{% url 'bookstore:login' %}">로그아웃</a>
     <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
     <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
     <a href="{% url 'bookstore:cart' %}">장바구니</a></br></br></br>
 
+    <!--OrderlistPage-->
     {% if Page == "OrderlistPage" %}
         <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
         <a href="{% url 'bookstore:orderPayment' %}">결제하기</a></br></br>
@@ -37,27 +43,49 @@
         {% endif %}
     {% endif %}
 
+    <!--PaymentPage-->
     {% if Page == "PaymentPage" %}
+        <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
+        <a href="{% url 'bookstore:orderdone' %}">주문하기</a></br></br>
         {% if Order_list.Order_DC_totalprice == 0 %}
-            <p>주문금액 : {{Order_list.Order_totalprice}}</p>
+            {% if Order_list.Order_DP == 0 %}
+                <p>주문금액 : {{Order_list.Order_totalprice}}</p>
+            {% else %}
+                <p>주문금액 : {{Order_list.Order_DP}}</p>
+            {% endif %}
         {% else %}
-            <p>주문금액 : {{Order_list.Order_DC_totalprice}}</p>
+            {% if Order_list.Order_DP == 0 %}
+                <p>주문금액 : {{Order_list.Order_DC_totalprice}}</p>
+            {% else %}
+                <p>주문금액 : {{Order_list.Order_DP}}</p>
+            {% endif %}
         {% endif %}
         <p>주문일자 : {{Order_list.Order_date}}</p>
         <p>---------------------------------------------------------</p>
-        <h4 style="display:inline">결재카드&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h4>
-        <a href="{% url 'bookstore:cardadd' %}">결재카드 바꾸기</a>
+        <h4 style="display:inline">동서페이</h4>
+        {% if Order_list.Order_DP == 0 %}
+            <form action="{% url 'bookstore:orderPayment' %}" method="post">
+            {% csrf_token %}
+                사용금액 : <input type="text" name="DP_UsedPrice">
+                <input type="submit" name="Register"></br>
+            </form>
+            <p>동서페이 잔액 : {{DP_list.DP_price}}</p>
+        {% else %}
+            <p>동서페이 사용금액 : {{DP_list.DP_UsedPrice}}</p>
+        {% endif %}
+        <p>---------------------------------------------------------</p>
+        <h4 style="display:inline">결재카드</h4>
         <p>신용카드 종류 : {{Card_list.Card_name}}</p>
         <p>신용카드 번호 : {{Card_list.Card_num}}</p>
         <p>신용카드 유효기간 : {{Card_list.Card_date}}</p>
         <p>---------------------------------------------------------</p>
-        <h4 style="display:inline">결재배송지&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</h4>
-        <a href="{% url 'bookstore:sdadd' %}">배송지 바꾸기</a>
+        <h4 style="display:inline">결재배송지</h4>
         <p>배송지 우편번호 : {{SD_list.SD_num}}</p>
         <p>배송지 기본주소 : {{SD_list.SD_ba}}</p>
         <p>배송지 상세주소 : {{SD_list.SD_da}}</p>
     {% endif %}
 
+    <!--OrderDonePage-->
     {% if Page == "OrderDonePage" %}
         <p>주문이 완료되었습니다.</p>
     {% endif %}

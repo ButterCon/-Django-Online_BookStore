@@ -37,6 +37,7 @@ class Order(models.Model):
     Order_date = models.DateTimeField(default=now, blank=True)
     Order_totalprice = models.IntegerField(default=0)
     Order_DC_totalprice = models.IntegerField(default=0)
+    Order_DP = models.IntegerField(default=0)
     Order_con = models.BooleanField(default=0)
 
     def __id__(self):

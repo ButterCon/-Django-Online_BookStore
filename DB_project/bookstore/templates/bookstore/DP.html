@@ -17,8 +17,8 @@
 
     <!--EnrollPage-->
     {% if Page == "EnrollPage" %}
-        <p>{{User.User.name}}님은 현재 동서페이 사용자가 아닙니다.</p>
-        <p style="display:inline">등록하시겠습니까?</p>
+        <p>{{User.User_name}}님은 현재 동서페이 사용자가 아닙니다.</p>
+        <p style="display:inline">동서페이를 등록하시겠습니까?</p>
         <a href="{% url 'bookstore:DPissue' %}">등록</a>
         <a href="{% url 'bookstore:userinfo' %}">미등록</a>
     {% endif %}

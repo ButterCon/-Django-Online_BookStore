@@ -99,8 +99,12 @@ def logout(request):
 
 def homePage(request, User_id):
     #장바구니 지워주기
+    #동서페이 사용안한경우 초기화
     User_qs = get_object_or_404(User, id=User_id)
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
+    if len(DongseoPay.objects.filter(User=User_qs)) != 0:
+        #동서페이가 발급된 경우
+        print(123)
     try:
         del request.session['Order_id']
     except KeyError:
@@ -283,8 +287,9 @@ def orderPaymentPage(request):
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
     SD_qs = get_object_or_404(ShippingDestination, id=User_qs.Select_SD_id)
     Card_qs = get_object_or_404(Card, id=User_qs.Select_Card_id)
-    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+
     if request.method == "POST":
+        DP_qs = get_object_or_404(DongseoPay, User=User_qs)
         if int(request.POST["DP_UsedPrice"]) > DP_qs.DP_price:
             page = "PaymentPage"
             mes = "사용금액이 잔액을 초과합니다."
@@ -313,11 +318,11 @@ def orderPaymentPage(request):
                                "Page": page}
 
                     return render(request, 'bookstore/ORDERPage.html', context)
-
-                Order_qs.Order_DP = Order_qs.Order_DC_totalprice - int(request.POST["DP_UsedPrice"])
+                else:
+                    Order_qs.Order_DP = Order_qs.Order_DC_totalprice - int(request.POST["DP_UsedPrice"])
             elif Order_qs.Order_DC_totalprice == 0: #할인 안한경우
                 if Order_qs.Order_totalprice < int(request.POST["DP_UsedPrice"]):
-                    #할인 값보다 사용금액이 클경우
+                    #주문 값보다 사용금액이 클경우
                     page = "PaymentPage"
                     mes = "사용금액이 총액을 초과합니다."
                     context = {"User": User_qs,
@@ -329,13 +334,14 @@ def orderPaymentPage(request):
                                "Page": page}
 
                     return render(request, 'bookstore/ORDERPage.html', context)
+                else:
+                    Order_qs.Order_DP = Order_qs.Order_totalprice - int(request.POST["DP_UsedPrice"])
 
-                Order_qs.Order_DP = Order_qs.Order_totalprice - int(request.POST["DP_UsedPrice"])
             Order_qs.save()
 
             DP_qs.DP_UsedPrice = int(request.POST["DP_UsedPrice"])
             DP_qs.DP_price -= int(request.POST["DP_UsedPrice"])
-            DP_qs.DP_history = Order_qs.id
+            #DP_qs.DP_history = Order_qs.id #나중에 Orderdone페이지에서 해줄것 결제 완료 안된경우 홈에서 수정해야됨
             DP_qs.save()
 
             page = "PaymentPage"
@@ -352,12 +358,20 @@ def orderPaymentPage(request):
         Order_qs.Order_date = datetime.datetime.now()
         Order_qs.save()
         page = "PaymentPage"
-        context = {"User": User_qs,
-                   "SD_list": SD_qs,
-                   "Card_list": Card_qs,
-                   "Order_list": Order_qs,
-                   "DP_list": DP_qs,
-                   "Page": page}
+        if len(DongseoPay.objects.filter(User=User_qs)) != 0:
+            DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+            context = {"User": User_qs,
+                       "SD_list": SD_qs,
+                       "Card_list": Card_qs,
+                       "Order_list": Order_qs,
+                       "DP_list": DP_qs,
+                       "Page": page}
+        else:
+            context = {"User": User_qs,
+                       "SD_list": SD_qs,
+                       "Card_list": Card_qs,
+                       "Order_list": Order_qs,
+                       "Page": page}
 
         return render(request, 'bookstore/ORDERPage.html', context)
 #수정중
@@ -381,6 +395,10 @@ def orderdonePage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+    #주문 완료되었으니까 DP_history에 Order.id를 넣어준다.
+    DP_qs.DP_history = Order_qs.id
+    DP_qs.save()
 
     if len(BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)) != 0:  # 해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
         BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)

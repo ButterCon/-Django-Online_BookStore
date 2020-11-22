@@ -34,7 +34,7 @@ class Card(models.Model):
 
 class Order(models.Model):
     User = models.ForeignKey(User, on_delete=models.CASCADE)
-    Order_date = models.DateTimeField(default=now, blank=True)
+    Order_date = models.DateTimeField(null=True, blank=True)
     Order_totalprice = models.IntegerField(default=0)
     Order_DC_totalprice = models.IntegerField(default=0)
     Order_DP = models.IntegerField(default=0)
@@ -85,9 +85,9 @@ class Coupon(models.Model): #쿠폰
     User = models.ForeignKey(User, on_delete=models.CASCADE)
     CP_kind = models.CharField(max_length=100)
     # 0)미사용, 1)사용대기, 2)사용완료
-    CP_state = models.IntegerField(default=0)
-    CP_date = models.DateTimeField()    #사용 날짜
-    CP_validity = models.CharField(max_length=100)  #유효기간
+    CP_state = models.IntegerField(default=2)
+    CP_date = models.DateTimeField(null=True)    #사용 날짜
+    CP_validity = models.CharField(default= 0, max_length=100)  #유효기간
 
     def __id__(self):
         return self.id
@@ -95,11 +95,11 @@ class Coupon(models.Model): #쿠폰
 
 class DongseoPay(models.Model): #동서페이
     User = models.ForeignKey(User, on_delete=models.CASCADE)
-    DP_TradingDate = models.DateTimeField(default=now, blank=True)
+    DP_TradingDate = models.DateTimeField(null=True, blank=True)
     DP_ChargePrice = models.IntegerField(default=0) #마지막 충전액
     DP_UsedPrice = models.IntegerField(default=0)   #사용액
     DP_price = models.IntegerField(default=0)   #잔액
-    DP_history = models.IntegerField(default=0) #주문목록id넣기
+    DP_history = models.IntegerField(default=0) #Order.id넣기
 
     def __id__(self):
         return self.id

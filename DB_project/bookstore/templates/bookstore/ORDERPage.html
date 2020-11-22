@@ -47,17 +47,29 @@
     {% if Page == "PaymentPage" %}
         <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
         <a href="{% url 'bookstore:orderdone' %}">주문하기</a></br></br>
+        <!--할인 안받은 경우-->
         {% if Order_list.Order_DC_totalprice == 0 %}
-            {% if Order_list.Order_DP == 0 %}
-                <p>주문금액 : {{Order_list.Order_totalprice}}</p>
+            <p>주문 금액 : {{Order_list.Order_totalprice}}</p>
+            <!--동서페이 사용한 경우-->
+            {% if Order_list.Order_DP != 0 %}
+                <p>동서페이 사용금액 : {{DP_list.DP_UsedPrice}}</p>
+                <b><p>결제 금액 : {{Order_list.Order_DP}}</p></b>
+            <!--동서페이 안사용한 경우-->
             {% else %}
-                <p>주문금액 : {{Order_list.Order_DP}}</p>
+                <p>동서페이 사용금액 : 0</p>
+                <b><p>결제 금액 : {{Order_list.Order_totalprice}}</p></b>
             {% endif %}
+        <!--할인 받은 경우-->
         {% else %}
-            {% if Order_list.Order_DP == 0 %}
-                <p>주문금액 : {{Order_list.Order_DC_totalprice}}</p>
+            <p>주문 금액 : {{Order_list.Order_DC_totalprice}}</p>
+            <!--동서페이 사용한 경우-->
+            {% if Order_list.Order_DP != 0 %}
+                <p>동서페이 사용금액 : {{DP_list.DP_UsedPrice}}</p>
+                <b><p>결제 금액 : {{Order_list.Order_DP}}</p></b>
+            <!--동서페이 안사용한 경우-->
             {% else %}
-                <p>주문금액 : {{Order_list.Order_DP}}</p>
+                <p>동서페이 사용금액 : 0</p>
+                <b><p>결제 금액 : {{Order_list.Order_DC_totalprice}}</p></b>
             {% endif %}
         {% endif %}
         <p>주문일자 : {{Order_list.Order_date}}</p>
@@ -72,6 +84,7 @@
             <p>동서페이 잔액 : {{DP_list.DP_price}}</p>
         {% else %}
             <p>동서페이 사용금액 : {{DP_list.DP_UsedPrice}}</p>
+            <p>남은 잔액 : {{DP_list.DP_price}}</p>
         {% endif %}
         <p>---------------------------------------------------------</p>
         <h4 style="display:inline">결재카드</h4>

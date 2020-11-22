@@ -45,6 +45,10 @@ def regPage(request):
                                    Card_date=request.POST['card_date'])
                     Card_qs.save()
                     ShoppingBasket(User=User_qs).save()
+                    Coupon(User=User_qs,
+                           CP_kind="10퍼센트").save()
+                    Coupon(User=User_qs,
+                           CP_kind="1000원").save()
                     User_qs.Select_SD_id = SD_qs.id
                     User_qs.Select_Card_id = Card_qs.id
                     User_qs.save()
@@ -67,15 +71,18 @@ def login(request):
         post_id = request.POST['id']
         post_pw = request.POST['pw']
         if post_id != "" and post_pw != "":
-            if post_id == get_object_or_404(User, User_id=post_id).User_id and \
-                    post_pw == get_object_or_404(User, User_id=post_id).User_pw:
-                #세션 전달
-                User_qs = get_object_or_404(User, User_id=post_id)
-                print("여기")
-                request.session['User_id'] = User_qs.id
-                return HttpResponseRedirect(reverse('bookstore:home', args=[User_qs.id]))
+            if len(User.objects.filter(User_id=post_id)) != 0:
+                if post_id == get_object_or_404(User, User_id=post_id).User_id and \
+                        post_pw == get_object_or_404(User, User_id=post_id).User_pw:
+                    #세션 전달
+                    User_qs = get_object_or_404(User, User_id=post_id)
+                    print("여기")
+                    request.session['User_id'] = User_qs.id
+                    return HttpResponseRedirect(reverse('bookstore:home', args=[User_qs.id]))
+                else:
+                    return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
             else:
-                return render(request, 'bookstore/loginPage.html', {'mes': '아이디 혹은 비밀번호가 일치하지 않습니다.'})
+                return render(request, "bookstore/loginPage.html", {"mes": "계정이 존재하지 않습니다."})
         else:
             return render(request, "bookstore/loginPage.html", {"mes": "빈칸이 있습니다."})
     elif request.method == "GET":
@@ -278,7 +285,7 @@ def orderPaymentPage(request):
     Card_qs = get_object_or_404(Card, id=User_qs.Select_Card_id)
     DP_qs = get_object_or_404(DongseoPay, User=User_qs)
     if request.method == "POST":
-        if int(request.Post["DP_UsedPrice"]) > DP_qs.DP_price:
+        if int(request.POST["DP_UsedPrice"]) > DP_qs.DP_price:
             page = "PaymentPage"
             mes = "사용금액이 잔액을 초과합니다."
             context = {"User": User_qs,
@@ -292,13 +299,44 @@ def orderPaymentPage(request):
             return render(request, 'bookstore/ORDERPage.html', context)
 
         else:
-            DP_qs.DP_UsedPrice = int(request.POST["DP_UsedPrice"])
-            DP_qs.save()
             if Order_qs.Order_DC_totalprice != 0:   #할인 한경우
+                if Order_qs.Order_DC_totalprice < int(request.POST["DP_UsedPrice"]):
+                    #할인 값보다 사용금액이 클경우
+                    page = "PaymentPage"
+                    mes = "사용금액이 총액을 초과합니다."
+                    context = {"User": User_qs,
+                               "SD_list": SD_qs,
+                               "Card_list": Card_qs,
+                               "Order_list": Order_qs,
+                               "DP_list": DP_qs,
+                               "mes": mes,
+                               "Page": page}
+
+                    return render(request, 'bookstore/ORDERPage.html', context)
+
                 Order_qs.Order_DP = Order_qs.Order_DC_totalprice - int(request.POST["DP_UsedPrice"])
             elif Order_qs.Order_DC_totalprice == 0: #할인 안한경우
+                if Order_qs.Order_totalprice < int(request.POST["DP_UsedPrice"]):
+                    #할인 값보다 사용금액이 클경우
+                    page = "PaymentPage"
+                    mes = "사용금액이 총액을 초과합니다."
+                    context = {"User": User_qs,
+                               "SD_list": SD_qs,
+                               "Card_list": Card_qs,
+                               "Order_list": Order_qs,
+                               "DP_list": DP_qs,
+                               "mes": mes,
+                               "Page": page}
+
+                    return render(request, 'bookstore/ORDERPage.html', context)
+
                 Order_qs.Order_DP = Order_qs.Order_totalprice - int(request.POST["DP_UsedPrice"])
             Order_qs.save()
+
+            DP_qs.DP_UsedPrice = int(request.POST["DP_UsedPrice"])
+            DP_qs.DP_price -= int(request.POST["DP_UsedPrice"])
+            DP_qs.DP_history = Order_qs.id
+            DP_qs.save()
 
             page = "PaymentPage"
             context = {"User": User_qs,

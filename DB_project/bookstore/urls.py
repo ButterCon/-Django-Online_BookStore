@@ -23,6 +23,7 @@ urlpatterns = [
     path('<int:book_id>/cartdel/', views.cartdelPage, name='cartdel'),
     ############################회원정보수정##############################
     path('userinfo/', views.User_info, name='userinfo'),
+    path('orderinfo/', views.Order_info, name='orderinfo'),
     path('sdinfo/', views.SD_info, name='sdinfo'),
     path('<int:SD_id>/sdadd/', views.SD_add, name='sdadd'),
     path('cardinfo/', views.CARD_info, name='cardinfo'),

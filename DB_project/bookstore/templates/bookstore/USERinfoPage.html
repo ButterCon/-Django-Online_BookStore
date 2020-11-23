@@ -39,6 +39,35 @@
             {% endif %}
         {% endfor %}
         <a href="{% url 'bookstore:cardinfo' %}">카드 추가/수정</a></br>
+        <p>---------------------------------------------------------</p>
+        <p>최근 주문내역</p>
+        <p>주문 번호 : {{Order_list.id}}</p>
+        <p>주문 일자 : {{Order_list.Order_date}}</p>
+        {% if Order_list.Order_DC_totalprice != 0 %}
+            <p>주문 금액 : {{Order_list.Order_DC_totalprice}}</p></br>
+        {% else %}
+            <p>주문 금액 : {{Order_list.Order_totalprice}}</p></br>
+        {% endif %}
+        <a href="{% url 'bookstore:orderinfo' %}">주문내역 상세조회</a>
+    {% endif %}
+
+    <!--OrderInfoPage-->
+    {% if Page == "OrderInfoPage" %}
+        <h3 style="display:inline">{{User.User_name}}님 회원수정</h3>
+        <a href="{% url 'bookstore:login' %}">로그아웃</a>
+        <a href="{% url 'bookstore:userinfo' %}">정보수정</a>
+        <a href="{% url 'bookstore:home' User.id %}">홈으로</a></br></br></br>
+        <b>주문내역</b></br>
+        {% for i in Order_list %}
+            <p>주문 번호 : {{i.id}}</p>
+            <p>주문 일자 : {{i.Order_date}}</p>
+            {% if i.Order_DC_totalprice != 0 %}
+                <p>주문 금액 : {{i.Order_DC_totalprice}}</p>
+            {% else %}
+                <p>주문 금액 : {{i.Order_totalprice}}</p>
+            {% endif %}
+            <p>---------------------------------------------------------</p>
+        {% endfor %}
     {% endif %}
 
     <!--SDPage-->

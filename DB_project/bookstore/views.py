@@ -104,11 +104,25 @@ def homePage(request, User_id):
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     if len(DongseoPay.objects.filter(User=User_qs)) != 0:
         #동서페이가 발급된 경우
-        print(123)
-    try:
-        del request.session['Order_id']
-    except KeyError:
-        pass
+        DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+        # Order_id가 세션에 존재할 경우
+        try:
+            Order_qs = get_object_or_404(Order, id=request.session['Order_id'])
+            # 주문이 완료되지 않고, DP를 사용한 경우
+            if Order_qs.Order_con == 0 and Order_qs.Order_DP != 0:
+                # 쿠폰 사용안한경우
+                if Order_qs.Order_DC_totalprice != 0:
+                    #DP잔액에 사용한 금액 다시 저장해주기
+                    DP_qs.DP_price += Order_qs.Order_totalprice - Order_qs.Order_DP
+                    DP_qs.save()
+                # 쿠폰 사용한 경우
+                else:
+                    #DP잔액에 사용한 금액 다시 저장해주기
+                    DP_qs.DP_price += Order_qs.Order_DC_totalprice - Order_qs.Order_DP
+                    DP_qs.save()
+            del request.session['Order_id']
+        except KeyError:
+            pass
     Order_qs = Order.objects.filter(User=User_qs, Order_con=0)
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
     CP_qs = Coupon.objects.filter(User=User_qs, CP_state=1) #사용대기쿠폰가져옴
@@ -320,6 +334,7 @@ def orderPaymentPage(request):
                     return render(request, 'bookstore/ORDERPage.html', context)
                 else:
                     Order_qs.Order_DP = Order_qs.Order_DC_totalprice - int(request.POST["DP_UsedPrice"])
+
             elif Order_qs.Order_DC_totalprice == 0: #할인 안한경우
                 if Order_qs.Order_totalprice < int(request.POST["DP_UsedPrice"]):
                     #주문 값보다 사용금액이 클경우
@@ -339,9 +354,7 @@ def orderPaymentPage(request):
 
             Order_qs.save()
 
-            DP_qs.DP_UsedPrice = int(request.POST["DP_UsedPrice"])
             DP_qs.DP_price -= int(request.POST["DP_UsedPrice"])
-            #DP_qs.DP_history = Order_qs.id #나중에 Orderdone페이지에서 해줄것 결제 완료 안된경우 홈에서 수정해야됨
             DP_qs.save()
 
             page = "PaymentPage"
@@ -358,6 +371,7 @@ def orderPaymentPage(request):
         Order_qs.Order_date = datetime.datetime.now()
         Order_qs.save()
         page = "PaymentPage"
+
         if len(DongseoPay.objects.filter(User=User_qs)) != 0:
             DP_qs = get_object_or_404(DongseoPay, User=User_qs)
             context = {"User": User_qs,
@@ -395,10 +409,19 @@ def orderdonePage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     SB_qs = ShoppingBasket.objects.get(User=User_qs)
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
-    DP_qs = get_object_or_404(DongseoPay, User=User_qs)
-    #주문 완료되었으니까 DP_history에 Order.id를 넣어준다.
-    DP_qs.DP_history = Order_qs.id
-    DP_qs.save()
+    #동서페이 발급한 경우
+    if len(DongseoPay.objects.filter(User=User_qs)) != 0:
+        #DP_qs = get_object_or_404(DongseoPay, User=User_qs)
+        DP_qs = DongseoPay.objects.get(User=User_qs)
+        #주문 완료되었으니까 DP_history에 Order.id를 넣어준다.
+        DP_qs.DP_history = Order_qs.id
+        #동서페이 사용한 경우 and 할인 받은경우
+        if Order_qs.Order_DP != 0 and Order_qs.Order_DC_totalprice != 0:
+            DP_qs.DP_UsedPrice = Order_qs.Order_DC_totalprice - Order_qs.Order_DP
+        elif Order_qs.Order_DP != 0 and Order_qs.Order_DC_totalprice == 0:
+            DP_qs.DP_UsedPrice = Order_qs.Order_totalprice - Order_qs.Order_DP
+        DP_qs.DP_TradingDate = datetime.datetime.now()
+        DP_qs.save()
 
     if len(BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)) != 0:  # 해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
         BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
@@ -532,6 +555,7 @@ def User_info(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     Card_qs = Card.objects.filter(User=User_qs)
     SD_qs = ShippingDestination.objects.filter(User=User_qs)
+    Order_qs = Order.objects.filter(User=User_qs, Order_con=1).last()
 
     if request.method == "POST":
         name = request.POST['name']
@@ -547,6 +571,7 @@ def User_info(request):
         context = {"User": User_qs,
                    "Card_list": Card_qs,
                    "SD_list": SD_qs,
+                   "Order_list": Order_qs,
                    "Page": page}
 
         return render(request, 'bookstore/USERinfoPage.html', context)
@@ -556,9 +581,22 @@ def User_info(request):
         context = {"User": User_qs,
                    "Card_list": Card_qs,
                    "SD_list": SD_qs,
+                   "Order_list": Order_qs,
                    "Page": page}
 
         return render(request, 'bookstore/USERinfoPage.html', context)
+
+
+def Order_info(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Order_qs = Order.objects.filter(User=User_qs, Order_con=1)
+
+    page = "OrderInfoPage"
+    context = {"User": User_qs,
+               "Order_list": Order_qs,
+               "Page": page}
+
+    return render(request, 'bookstore/USERinfoPage.html', context)
 
 
 def SD_info(request):

@@ -37,6 +37,7 @@ class Order(models.Model):
     Order_date = models.DateTimeField(null=True, blank=True)
     Order_totalprice = models.IntegerField(default=0)
     Order_DC_totalprice = models.IntegerField(default=0)
+    #Order_DP = 결제금액 - DP사용액
     Order_DP = models.IntegerField(default=0)
     Order_con = models.BooleanField(default=0)
 

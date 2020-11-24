@@ -21,10 +21,11 @@
         <p style="display:inline"><b>주문내역&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b></p>
         <a href="{% url 'bookstore:orderPayment' %}">결제하기</a></br></br>
 
-        <p>상품명 / 정가 / 수량 / 합계 / 할인가 / 쿠폰</p>
+        <p>상품명 / 정가 / 적립금 / 수량 / 합계 / 할인가 / 쿠폰 </p>
         {% for i in BookOrder_list %}
             <p style="display:inline">{{i.Book.Book_name}} /</p><!--책이름-->
             <p style="display:inline">{{i.Book.Book_price}} /</p><!--책정가-->
+            <p style="display:inline">{{i.BO_reserves}} /</p><!--책적립금-->
             <p style="display:inline">{{i.BO_count}} /</p><!--책수량-->
             <p style="display:inline">{{i.BO_price}} /</p><!--책할인가합계-->
             <p style="display:inline">{{i.BO_DC_price}} /</p><!--책할인가-->
@@ -94,7 +95,7 @@
         {% endif %}
         <p>주문일자 : {{Order_list.Order_date}}</p>
 
-        <!-- 동서페이 발급된된 경우-->
+        <!-- 동서페이 발급된 경우-->
         {% if DP_list %}
         <p>---------------------------------------------------------</p>
         <h4 style="display:inline">동서페이</h4>
@@ -111,6 +112,19 @@
             {% endif %}
         {% endif %}
         <p>---------------------------------------------------------</p>
+        <h4 style="display:inline">적립금</h4>
+            {% if Order_list.Order_used_Reserves == 0 %}
+                <form action="{% url 'bookstore:orderReserves' %}" method="post">
+                {% csrf_token %}
+                    <p>보유 적립금 : {{User.User_Reserves}}</p>
+                    사용적립금 : <input type="text" name="Order_used_Reserves">
+                    <input type="submit" name="Register"></br>
+                </form>
+            {% else %}
+                <p>보유 적립금 : {{User.User_Reserves}}</p>
+                <p>적립금 사용금액 : {{Order_list.Order_used_Reserves}}</p>
+            {% endif %}
+        <p>---------------------------------------------------------</p>
         <h4 style="display:inline">결재카드</h4>
         <p>신용카드 종류 : {{Card_list.Card_name}}</p>
         <p>신용카드 번호 : {{Card_list.Card_num}}</p>
@@ -125,6 +139,7 @@
     <!--OrderDonePage-->
     {% if Page == "OrderDonePage" %}
         <p>주문이 완료되었습니다.</p>
+        <p>적립된 적립금 : {{Order_list.Order_Reserves}}</p>
     {% endif %}
 </body>
 </html>

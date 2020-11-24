@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 페이지</title>
+</head>
+<body>
+    <h3 style="display:inline">admin님 적립금 수정 페이지</h3>
+    <a href="{% url 'bookstore:home' User.id %}">홈으로</a>
+    <a href="{% url 'bookstore:cart' %}">장바구니</a></br></br></br>
+    {% if Page == "resedit" %}
+        <form action="{% url 'bookstore:resedit' %}" method="post">
+        {% csrf_token %}
+            사용 적립금 : <input type="text" value="{{Book_list.Book_reserves}}" name="Book_reserves"></br>
+            <input type="submit" name="Register"></br>
+        </form>
+        <p>현재 적립률 : {{Book_list.Book_reserves}}</p>
+    {% endif %}
+</body>
+</html>

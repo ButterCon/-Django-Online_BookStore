@@ -7,6 +7,7 @@ class User(models.Model):
     User_name = models.CharField(max_length=100)
     Select_SD_id = models.IntegerField(default=0)
     Select_Card_id = models.IntegerField(default=0)
+    User_Reserves = models.IntegerField(default=0)
 
     def __str__(self):
         return self.User_id
@@ -37,9 +38,12 @@ class Order(models.Model):
     Order_date = models.DateTimeField(null=True, blank=True)
     Order_totalprice = models.IntegerField(default=0)
     Order_DC_totalprice = models.IntegerField(default=0)
+    Order_Reserves_totalprice = models.IntegerField(default=0)
     #Order_DP = 결제금액 - DP사용액
     Order_DP = models.IntegerField(default=0)
     Order_con = models.BooleanField(default=0)
+    Order_Reserves = models.IntegerField(default=0)
+    Order_used_Reserves = models.IntegerField(default=0)
 
     def __id__(self):
         return self.id
@@ -56,6 +60,7 @@ class Book(models.Model):
     Book_name = models.CharField(max_length=100)
     Book_price = models.IntegerField(default=0)
     Book_stock = models.IntegerField(default=5)
+    Book_reserves = models.FloatField(default=0.3)
 
     def __id__(self):
         return self.id
@@ -65,6 +70,7 @@ class BookSB(models.Model):         #책 장바구니 리스트
     Book = models.ForeignKey(Book, on_delete=models.PROTECT)
     ShoppingBasket = models.ForeignKey(ShoppingBasket, on_delete=models.PROTECT)
     BookSB_type = models.BooleanField(default=1)#0은 즉시구매, 1은 장바구니 구매
+    BookSB_reserves = models.IntegerField(default=0)
 
     def __id__(self):
         return self.id
@@ -77,6 +83,7 @@ class BookOrder(models.Model):      #책 주문내역리스트
     BO_price = models.IntegerField(default=0)   #책 더한 가격
     CP_kind = models.CharField(default='', max_length=100)
     BO_DC_price = models.IntegerField(default=0)
+    BO_reserves = models.IntegerField(default=0)   #적립금 더한가격
 
     def __id__(self):
         return self.id

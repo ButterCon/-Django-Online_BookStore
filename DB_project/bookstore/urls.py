@@ -6,6 +6,8 @@ app_name = "bookstore"
 urlpatterns = [
     path('test1/', views.test1, name='test1'),
     path('test2/', views.test2, name='test2'),
+    ############################관리자#################################
+    path('resedit/', views.reseditPage, name='resedit'),
     ############################회원가입#################################
     path('reg/', views.regPage, name='reg'),
     path('login/', views.login, name='login'),
@@ -15,6 +17,7 @@ urlpatterns = [
     path('order/', views.orderPage, name='order'),
     path('orderPayment/', views.orderPaymentPage, name='orderPayment'),
     path('CPorder/', views.CPorderPage, name='CPorder'),
+    path('orderReserves/', views.orderReservesPage, name='orderReserves'),
     path('orderdone/', views.orderdonePage, name='orderdone'),
     ############################장바구니#################################
     path('cart/', views.cartPage, name='cart'),

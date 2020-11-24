@@ -25,6 +25,21 @@ def test2(request):
     return render(request, "bookstore/test2.html", context)
 
 
+def reseditPage(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Book_qs = Book.objects.all().first
+
+    if request.method == "POST":    #값을 받을경우 실행
+        for i in Book.objects.all():
+            i.Book_reserves = float(request.POST["Book_reserves"])
+            i.save()
+    page = "resedit"
+    context = {"User": User_qs,
+               "Book_list": Book_qs,
+               "Page": page}
+
+    return render(request, 'bookstore/admin.html', context)
+
 def regPage(request):
     if request.method == "POST":    #값을 받을경우 실행
         if request.POST['name'] != "" and request.POST['id'] != "" and request.POST['pw'] != "" and request.POST['re_pw'] != "" and request.POST['sd_num'] != "" and request.POST['sd_ba'] != "" and request.POST['sd_da'] != "" and request.POST['card_name'] != "" and request.POST['card_num'] != "" and request.POST['card_date'] != "":
@@ -104,22 +119,30 @@ def homePage(request, User_id):
     SB_qs = get_object_or_404(ShoppingBasket, User=User_qs)
     if len(DongseoPay.objects.filter(User=User_qs)) != 0:
         #동서페이가 발급된 경우
+        print("동서페이발급")
         DP_qs = get_object_or_404(DongseoPay, User=User_qs)
         # Order_id가 세션에 존재할 경우
         try:
             Order_qs = get_object_or_404(Order, id=request.session['Order_id'])
             # 주문이 완료되지 않고, DP를 사용한 경우
             if Order_qs.Order_con == 0 and Order_qs.Order_DP != 0:
+                print("진입1")
                 # 쿠폰 사용안한경우
                 if Order_qs.Order_DC_totalprice != 0:
                     #DP잔액에 사용한 금액 다시 저장해주기
+                    print(DP_qs.DP_price)
+                    print(Order_qs.Order_totalprice)
+                    print(Order_qs.Order_DP)
                     DP_qs.DP_price += Order_qs.Order_totalprice - Order_qs.Order_DP
                     DP_qs.save()
+                    print(DP_qs.DP_price)
                 # 쿠폰 사용한 경우
                 else:
                     #DP잔액에 사용한 금액 다시 저장해주기
+                    print(DP_qs.DP_price)
                     DP_qs.DP_price += Order_qs.Order_DC_totalprice - Order_qs.Order_DP
                     DP_qs.save()
+                    print(DP_qs.DP_price)
             del request.session['Order_id']
         except KeyError:
             pass
@@ -176,7 +199,10 @@ def sincartaddPage(request, book_id):
     Book_qs.Book_stock += -1
     Book_qs.save()
     #장바구니에 책 넣기
-    BookSB(Book=Book_qs, ShoppingBasket=SB_qs, BookSB_type=0).save()
+    BookSB(Book=Book_qs,
+           ShoppingBasket=SB_qs,
+           BookSB_type=0,
+           BookSB_reserves=Book_qs.Book_price * Book_qs.Book_reserves).save()
 
     return HttpResponseRedirect(reverse("bookstore:order"))
 
@@ -193,7 +219,9 @@ def mulcartaddPage(request, book_id):
     Book_qs.Book_stock += -1
     Book_qs.save()
     #장바구니에 책 넣기
-    BookSB(Book=Book_qs, ShoppingBasket=SB_qs).save()
+    BookSB(Book=Book_qs,
+           ShoppingBasket=SB_qs,
+           BookSB_reserves=Book_qs.Book.price * Book_qs.BookSB_reserves).save()
     BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs) #장바구니 가져오기
     #총가격
     Book_total_price = 0
@@ -258,11 +286,16 @@ def orderPage(request):
         BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=1)
         print("장바구니구매")
     total_price = 0 #총 금액
-
+    total_reserves = 0
     #처음 장바구니리스트를 주문에 넣어줌
     for i in BookSB_qs:
         total_price += i.Book.Book_price  #모든 책 가격 더하기
-        qs = BookOrder(Book=i.Book, Order=Order_qs, BO_count=1, BO_price=i.Book.Book_price)
+        total_reserves += i.BookSB_reserves #모든 책 적립금 더하기
+        qs = BookOrder(Book=i.Book,
+                       Order=Order_qs,
+                       BO_count=1,
+                       BO_price=i.Book.Book_price,
+                       BO_reserves=i.BookSB_reserves)
         qs.save()
 
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
@@ -277,11 +310,13 @@ def orderPage(request):
                     j.delete()  #중복되는 책 하나 제거
                     i.BO_count += 1 #책 개수 +1
                     i.BO_price += i.Book.Book_price #책 값 한번더 더해줌
+                    i.BO_reserves += i.BO_reserves
                     i.save()    #저장
 
     BookOrder_qs = BookOrder.objects.filter(Order=Order_qs)
 
     Order_qs.Order_totalprice = total_price
+    Order_qs.Order_Reserves = total_reserves
     #Order_qs.Order_DC_totalprice = Order_qs.Order_totalprice
     Order_qs.save()
 
@@ -390,6 +425,31 @@ def orderPaymentPage(request):
         return render(request, 'bookstore/ORDERPage.html', context)
 #수정중
 
+
+def orderReservesPage(request):
+    User_qs = get_object_or_404(User, id=request.session["User_id"])
+    Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
+    Book_qs = Book.objects.all().first()
+    SD_qs = get_object_or_404(ShippingDestination, id=User_qs.Select_SD_id)
+    Card_qs = get_object_or_404(Card, id=User_qs.Select_Card_id)
+
+    Order_qs.Order_used_Reserves = int(request.POST["Order_used_Reserves"])
+    Order_qs.Order_totalprice -= Order_qs.Order_used_Reserves
+    Order_qs.Order_Reserves = Order_qs.Order_totalprice * Book_qs.Book_reserves
+    Order_qs.save()
+    User_qs.User_Reserves -= int(request.POST["Order_used_Reserves"])
+    User_qs.save()
+
+    page = "PaymentPage"
+    context = {"User": User_qs,
+               "SD_list": SD_qs,
+               "Card_list": Card_qs,
+               "Order_list": Order_qs,
+               "Page": page}
+
+    return render(request, 'bookstore/ORDERPage.html', context)
+
+
 def CPorderPage(request):
     User_qs = get_object_or_404(User, id=request.session["User_id"])
     Order_qs = get_object_or_404(Order, id=request.session["Order_id"])
@@ -423,7 +483,8 @@ def orderdonePage(request):
         DP_qs.DP_TradingDate = datetime.datetime.now()
         DP_qs.save()
 
-    if len(BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)) != 0:  # 해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
+    # 해당유저의 장바구니에 바로구매목록이 있으면 바로구매로 진행함
+    if len(BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)) != 0:
         BookSB_qs = BookSB.objects.filter(ShoppingBasket=SB_qs, BookSB_type=0)
         print("바로구매완료")
     else:
@@ -442,11 +503,15 @@ def orderdonePage(request):
     #Order_con = 1로 바꿔주기, 세션에서 삭제
     Order_qs.Order_con = 1
     Order_qs.save()
+
+    User_qs.User_Reserves += Order_qs.Order_Reserves
+    User_qs.save()
     del request.session["Order_id"]
 
     page = 'OrderDonePage'
     context = {"User": User_qs,
                "BookOrder_list": BookOrder_qs,
+               "Order_list": Order_qs,
                'Page': page}
     return render(request, 'bookstore/ORDERPage.html', context)
 
